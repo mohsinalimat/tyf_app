@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include tyf_app *.css
+recursive-include tyf_app *.csv
+recursive-include tyf_app *.html
+recursive-include tyf_app *.ico
+recursive-include tyf_app *.js
+recursive-include tyf_app *.json
+recursive-include tyf_app *.md
+recursive-include tyf_app *.png
+recursive-include tyf_app *.py
+recursive-include tyf_app *.svg
+recursive-include tyf_app *.txt
+recursive-exclude tyf_app *.pyc

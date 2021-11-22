@@ -120,6 +120,9 @@ frappe.ui.form.on("Project", {
       type_cell.innerHTML = data[i].type;
       total_cell.colSpan = "2";
       total_cell.innerHTML = data[i].value;
+      if(data[i].type == "Total Cost"){
+        frm.set_value("estimated_costing", data[i].estimated_costing);
+      }
     }
   },
   
@@ -128,7 +131,6 @@ frappe.ui.form.on("Project", {
     frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_budget_line', {
       'project_code': frm.doc.name
     }).then(r => {
-      // console.log(r);
       frm.events.add_row(frm, r);
     });
   },
@@ -138,7 +140,6 @@ frappe.ui.form.on("Project", {
       'project_code': frm.doc.name,
       'percent': frm.doc.psc_cost_percent
     }).then(r => {
-      // console.log(r);
       frm.events.add_row_footer(frm, r);
     });
   },

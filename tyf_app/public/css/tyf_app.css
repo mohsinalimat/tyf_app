@@ -23,9 +23,7 @@ table thead tr {
 table tbody tr {
   height: 48px;
 }
-/* table tbody tr:last-child {
-  border: 0;
-} */
+
 table td, table th {
   text-align: left;
 }
@@ -126,12 +124,3 @@ table td.r, table th.r {
     border: 2px solid #ffffff;
   }
 }
-/* body {
-  background: #9bc86a;
-  font: 400 14px 'Calibri', 'Arial';
-  padding: 20px;
-}
-blockquote {
-  color: white;
-  text-align: center;
-} */

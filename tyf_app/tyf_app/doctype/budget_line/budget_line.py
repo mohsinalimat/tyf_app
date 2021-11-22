@@ -13,26 +13,9 @@ def get_budget_line_doc(project_code):
 	doc.project_code = project_code
 	return doc
 
-# @frappe.whitelist()
-# def get_parent(project_code):
-# 	doc = frappe.get_all('Budget Line', filters={'project_code': project_code}, fields=['code', 'description', 'name'], order_by='code')
-# 	# bl = {}
-# 	# for i in doc:
-# 	# 	childern = frappe.get_all('Budget Line Child', filters={'parenttype': 'Budget Line', 'parent': i.name}, fields=['code', 'title'], order_by='code')
-# 	return doc
-
-# @frappe.whitelist()
-# def get_children(parent_code):
-# 	doc = frappe.get_all('Budget Line Child', filters={'parenttype': 'Budget Line', 'parent': parent_code}, fields=['code', 'title'], order_by='code')
-# 	# bl = {}
-# 	# for i in doc:
-# 	# 	childern = frappe.get_all('Budget Line Child', filters={'parenttype': 'Budget Line', 'parent': i.name}, fields=['code', 'title'], order_by='code')
-# 	return doc
-
 @frappe.whitelist()
 def get_budget_line(project_code):
 	data = []
-	# t_u_cost = 0
 	parents = frappe.get_all(
 		'Budget Line',
 		filters={'project_code': project_code},
@@ -82,8 +65,6 @@ def get_budget_line(project_code):
 				"charge": frappe.format(child.charge, 'Percent'),
 				"total_cost": frappe.format(child.total_cost, 'Currency')
 				})
-	# 		t_u_cost = t_u_cost + child.unit_cost
-	# print("t_u_cost = ", t_u_cost, " ---------")
 	return data
 
 
@@ -101,10 +82,6 @@ def get_footer(project_code, percent):
 			'total_cost'
 			], order_by='code')
 	for parent in parents:
-		# data.append({
-		# 	"name": parent.name,
-		# 	"total_cost": frappe.format(parent.total_cost, 'Currency')
-		# 	})
 		p_total = p_total + parent.total_cost
 		children = frappe.get_all(
 			'Budget Line Child',
@@ -150,9 +127,9 @@ def get_footer(project_code, percent):
 			{
 			"tbody_id": "t_footer_psd",
 			"type": "Total Cost",
-			"value": frappe.format(psc_ammount + p_total, 'Currency')	
+			"value": frappe.format(psc_ammount + p_total, 'Currency'),
+			"estimated_costing": psc_ammount + p_total
 			})
-	# print(data)
 	return data
 
 @frappe.whitelist()

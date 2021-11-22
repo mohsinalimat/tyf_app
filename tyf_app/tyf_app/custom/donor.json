@@ -1,0 +1,32 @@
+{
+ "custom_fields": [],
+ "custom_perms": [],
+ "doctype": "Donor",
+ "property_setters": [
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2021-11-22 18:44:22.797817",
+   "default_value": null,
+   "doc_type": "Donor",
+   "docstatus": 0,
+   "doctype_or_field": "DocType",
+   "field_name": null,
+   "idx": 0,
+   "modified": "2021-11-22 18:44:22.797817",
+   "modified_by": "Administrator",
+   "name": "Donor-main-autoname",
+   "owner": "Administrator",
+   "parent": null,
+   "parentfield": null,
+   "parenttype": null,
+   "property": "autoname",
+   "property_type": "Data",
+   "row_name": null,
+   "value": "1.###"
+  }
+ ],
+ "sync_on_migrate": 1
+}

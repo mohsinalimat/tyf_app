@@ -352,7 +352,7 @@
    "print_hide_if_no_value": 0,
    "print_width": null,
    "read_only": 0,
-   "read_only_depends_on": "eval:doc.status == \"Open\" || doc.status == \"Completed\"",
+   "read_only_depends_on": "eval:!doc.__islocal && (doc.status == \"Open\" || doc.status == \"Completed\")",
    "report_hide": 0,
    "reqd": 1,
    "search_index": 0,

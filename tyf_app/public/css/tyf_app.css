@@ -1,0 +1,137 @@
+table {
+  border-spacing: 1;
+  border-collapse: collapse;
+  background: #f1f1f13b;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+table * {
+  position: relative;
+}
+table td, table th {
+  padding: 0.5em;
+ 
+}
+table thead tr {
+  height: 60px;
+  background: #efefefe0;
+  font-size: 16px;
+}
+table tbody tr {
+  height: 48px;
+}
+/* table tbody tr:last-child {
+  border: 0;
+} */
+table td, table th {
+  text-align: left;
+}
+table td.l, table th.l {
+  text-align: right;
+}
+table td.c, table th.c {
+  text-align: center;
+}
+table td.r, table th.r {
+  text-align: center;
+}
+@media screen and (max-width: 48em) {
+  table {
+    display: block;
+ }
+  table > *, table tr, table td, table th {
+    display: block;
+ }
+  table thead {
+    display: none;
+ }
+  table tbody tr {
+    height: auto;
+    padding: 8px 0;
+    border-bottom: 10px solid #ffffff;
+    background: #00000003;
+ }
+  table tbody tr td {
+    padding-left: 45%;
+    margin-bottom: 12px;
+ }
+  table tbody tr td:last-child {
+    margin-bottom: 0;
+ }
+  table tbody tr td:before {
+    position: absolute;
+    font-weight: 700;
+    width: 40%;
+    left: 10px;
+    top: 0;
+  }
+  table #t_body #t_parent td:nth-child(1):before {
+    content: "Code";
+  }
+  table #t_body #t_parent td:nth-child(2):before {
+    content: "B.L Description";
+  }
+  table #t_body #t_parent td:nth-child(3):before {
+    content: "D / S";
+  }
+  table #t_body #t_parent td:nth-child(4):before {
+    content: "Edit";
+  }
+  table #t_body #t_child td:nth-child(1):before {
+    content: "Code";
+  }
+  table #t_body #t_child td:nth-child(2):before {
+    content: "B.L Description";
+  }
+  table #t_body #t_child td:nth-child(3):before {
+    content: "D / S";
+  }
+  table #t_body #t_child td:nth-child(4):before {
+    content: "Sector";
+  }
+  table #t_body #t_child td:nth-child(5):before {
+    content: "Quantity";
+  }
+  table #t_body #t_child td:nth-child(6):before {
+    content: "Unit cost";
+  }
+  table #t_body #t_child td:nth-child(7):before {
+    content: "Duration";
+  }
+  table #t_body #t_child td:nth-child(8):before {
+    content: "% Cost";
+  }
+  table #t_body #t_child td:nth-child(9):before {
+    content: "Total Cost";
+  }
+  table #t_footer tr td:nth-child(1):before {
+    content: "SubTotal";
+  }
+  table #t_footer tr td:nth-child(2):before {
+    content: "Ammount";
+  }
+  table #t_footer_psd tr td:nth-child(1):before {
+    content: "PSC Cost";
+  }
+  table #t_footer_psd tr td:nth-child(2):before {
+    content: "Ammount";
+  }
+}
+
+@media screen and (min-width: 48em){
+  table, td, tr, th {
+    border: 2px solid #ffffff;
+  }
+}
+/* body {
+  background: #9bc86a;
+  font: 400 14px 'Calibri', 'Arial';
+  padding: 20px;
+}
+blockquote {
+  color: white;
+  text-align: center;
+} */

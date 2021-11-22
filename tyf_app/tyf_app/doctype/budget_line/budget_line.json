@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:BL-{code}-{project_code}-{######}",
+ "creation": "2021-11-12 21:59:48.586214",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "description",
+  "code",
+  "column_break_3",
+  "project_code",
+  "total_cost",
+  "budget_line_child_section",
+  "bl_child",
+  "counter"
+ ],
+ "fields": [
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.project_code != undefined",
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project_code",
+   "fieldtype": "Link",
+   "label": "Project Code",
+   "options": "Project",
+   "read_only_depends_on": "eval:doc.counter > 0",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "label": "Total Cost",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.code != undefined",
+   "fieldname": "budget_line_child_section",
+   "fieldtype": "Section Break",
+   "label": "Budget Line Child"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "bl_child",
+   "fieldtype": "Table",
+   "label": "Budget Line Children",
+   "options": "Budget Line Child"
+  },
+  {
+   "default": "0",
+   "fieldname": "counter",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "counter"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-11-22 10:10:07.185353",
+ "modified_by": "Administrator",
+ "module": "TYF App",
+ "name": "Budget Line",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

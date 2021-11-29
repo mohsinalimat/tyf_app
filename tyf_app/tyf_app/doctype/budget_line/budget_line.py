@@ -14,6 +14,13 @@ def get_budget_line_doc(project_code):
 	return doc
 
 @frappe.whitelist()
+def get_budget_doc(project_code):
+	doc = frappe.new_doc('Budget')
+	doc.budget_against = "Project"
+	doc.project = project_code
+	return doc
+
+@frappe.whitelist()
 def get_budget_line(project_code):
 	data = []
 	parents = frappe.get_all(

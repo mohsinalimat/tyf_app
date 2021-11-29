@@ -87,6 +87,10 @@ doctype_js = {"Project" : "public/js/project.js"}
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+override_doctype_class = {
+	"Payroll Entry": "tyf_app.overrides.TYFPayrollEntry"
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events

@@ -48,10 +48,18 @@ frappe.ui.form.on("Project", {
       $(frm.fields_dict['bl_html'].wrapper)
       .html(frappe.render_template(html));
     } else {
-      console.log("I am just created w8ing to be saved")
        $(frm.fields_dict['bl_html'].wrapper).empty()
-   }
+      }
+    frm.events.set_create_budget_button(frm);
   },
+
+  set_create_budget_button: (frm) => {
+		if (!frm.is_new()) {
+			frm.add_custom_button(__('Create Budget'), () => {
+				frm.events.create_budget(frm);
+			});
+		}
+	},
 
   psc_cost_percent: (frm) => {
     cur_frm.refresh();
@@ -64,9 +72,23 @@ frappe.ui.form.on("Project", {
       args : {
         'project_code': cur_frm_name
       },
-      callback: function(r) {
+      callback: (r) => {
         var doc = frappe.model.sync(r.message);
-        frappe.set_route("Form", r.message.doctype, r.message.name);
+        frappe.set_route("Form", doc[0].doctype, doc[0].name);
+      }
+    });
+  },
+
+  create_budget: (frm) => {
+    var cur_frm_name = frm.doc.name;
+    frappe.call({
+      method: 'tyf_app.tyf_app.doctype.budget_line.budget_line.get_budget_doc',
+      args : {
+        'project_code': cur_frm_name
+      },
+      callback: (r) => {        
+        var doc = frappe.model.sync(r.message);
+        frappe.set_route("Form", doc[0].doctype, doc[0].name);
       }
     });
   },
@@ -126,7 +148,6 @@ frappe.ui.form.on("Project", {
     }
   },
   
-
   get_budget_line:(frm) => {
     frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_budget_line', {
       'project_code': frm.doc.name

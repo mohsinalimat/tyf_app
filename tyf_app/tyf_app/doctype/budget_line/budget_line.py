@@ -18,7 +18,50 @@ def get_budget_doc(project_code):
 	doc = frappe.new_doc('Budget')
 	doc.budget_against = "Project"
 	doc.project = project_code
+	doc.set('accounts',get_budget_line_chiled(project_code))
 	return doc
+
+def get_budget_line_chiled(project_code):
+	account_ditails = []
+	parents = frappe.get_all(
+		'Budget Line',
+		filters={'project_code': project_code},
+		fields=[
+			'name'
+			], order_by='code')
+	for parent in parents:
+		children = frappe.get_all(
+			'Budget Line Child',
+			filters={
+				'parenttype': 'Budget Line',
+				'parent': parent.name},
+				fields=[
+					'code',
+					'total_cost',
+					'account'
+					], order_by='idx')
+
+		for child in children:
+			if child.account:
+				if not account_ditails:
+					account_ditails.append({
+						"account": child.account,
+						"budget_amount": child.total_cost
+						})
+				else:
+					old = False
+					for acc in account_ditails:
+						if acc['account'] == child.account:
+							# print("***** ", acc['account'])
+							acc['budget_amount'] += child.total_cost
+							old = True
+					if not old:
+						account_ditails.append({
+							"account": child.account,
+							"budget_amount": child.total_cost
+							})
+	return account_ditails
+
 
 @frappe.whitelist()
 def get_budget_line(project_code):

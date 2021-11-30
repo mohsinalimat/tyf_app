@@ -2,9 +2,18 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Budget Line', {
-	// refresh: function(frm) {
-	// 	console.log(frm.doc.project_code);
-	// },
+
+	refresh: function(frm) {
+		frm.fields_dict['bl_child'].grid.get_field('account').get_query = function(doc, cdt, cdn) {
+			var child = locals[cdt][cdn];
+			return {    
+				filters:[
+					['is_group', '=', 0]
+				]
+			}
+		}
+	},
+
 	onload: (frm) => {
 		if(frm.doc.project_code && frm.doc.__islocal){
 			frm.events.get_max_parent_code(frm);

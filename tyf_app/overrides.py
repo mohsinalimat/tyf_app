@@ -7,6 +7,7 @@ import frappe
 from frappe.utils import flt
 from frappe import _
 
+
 class TYFPayrollEntry(PayrollEntry):
 
     def get_salary_components(self, component_type):
@@ -175,3 +176,107 @@ class TYFPayrollEntry(PayrollEntry):
                 raise
 
         return jv_name
+
+    @frappe.whitelist()
+    def make_payment_entry(self):
+        self.check_permission('write')
+
+        salary_slip_name_list = frappe.db.sql(""" select t1.name from `tabSalary Slip` t1
+        where t1.docstatus = 1 and start_date >= %s and end_date <= %s and t1.payroll_entry = %s
+        """, (self.start_date, self.end_date, self.name), as_list=True)
+
+        if salary_slip_name_list and len(salary_slip_name_list) > 0:
+
+            for salary_slip_name in salary_slip_name_list:
+                salary_slip_total = 0
+                salary_slip = frappe.get_doc(
+                    "Salary Slip", salary_slip_name[0])
+                party = salary_slip.employee
+                for sal_detail in salary_slip.earnings:
+                    is_flexible_benefit, only_tax_impact, creat_separate_je, statistical_component = frappe.db.get_value("Salary Component", sal_detail.salary_component,
+                                                                                                                            ['is_flexible_benefit', 'only_tax_impact', 'create_separate_payment_entry_against_benefit_claim', 'statistical_component'])
+                    if only_tax_impact != 1 and statistical_component != 1:
+                        if is_flexible_benefit == 1 and creat_separate_je == 1:
+                            self.create_journal_entry(
+                                sal_detail.amount, sal_detail.salary_component, party)
+                        else:
+                            salary_slip_total += sal_detail.amount
+                for sal_detail in salary_slip.deductions:
+                    statistical_component = frappe.db.get_value(
+                        "Salary Component", sal_detail.salary_component, 'statistical_component')
+                    if statistical_component != 1:
+                        salary_slip_total -= sal_detail.amount
+                if salary_slip_total > 0:
+                    self.create_journal_entry(
+                        salary_slip_total, "salary", party)
+
+    def create_journal_entry(self, je_payment_amount, user_remark, party):
+        payroll_payable_account = self.payroll_payable_account
+        precision = frappe.get_precision(
+            "Journal Entry Account", "debit_in_account_currency")
+
+        accounts = []
+        row = []
+        currencies = []
+        multi_currency = 0
+        company_currency = erpnext.get_company_currency(self.company)
+
+        exchange_rate, amount = self.get_amount_and_exchange_rate_for_journal_entry(
+            self.payment_account, je_payment_amount, company_currency, currencies)
+        account_type = frappe.db.get_value(
+            "Account", self.payment_account, "account_type")
+        if account_type in ["Receivable", "Payable"]:
+            row = {
+                "account": self.payment_account,
+                    "bank_account": self.bank_account,
+                    "credit_in_account_currency": flt(amount, precision),
+                    "exchange_rate": flt(exchange_rate),
+                    "party_type": "Employee",
+                    "party": party
+            }
+        else:
+            row = {
+                "account": self.payment_account,
+                    "bank_account": self.bank_account,
+                    "credit_in_account_currency": flt(amount, precision),
+                    "exchange_rate": flt(exchange_rate),
+            }
+        accounts.append(row)
+
+        exchange_rate, amount = self.get_amount_and_exchange_rate_for_journal_entry(
+            payroll_payable_account, je_payment_amount, company_currency, currencies)
+        account_type = frappe.db.get_value(
+            "Account", payroll_payable_account, "account_type")
+        if account_type in ["Receivable", "Payable"]:
+            row = {
+                "account": payroll_payable_account,
+                    "debit_in_account_currency": flt(amount, precision),
+                    "exchange_rate": flt(exchange_rate),
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    "party_type": "Employee",
+                    "party": party
+            }
+        else:
+            row = {
+                "account": payroll_payable_account,
+                "debit_in_account_currency": flt(amount, precision),
+                "exchange_rate": flt(exchange_rate),
+                "reference_type": self.doctype,
+                "reference_name": self.name
+                }
+        accounts.append(row)
+
+        if len(currencies) > 1:
+            multi_currency = 1
+
+        journal_entry = frappe.new_doc('Journal Entry')
+        journal_entry.voucher_type = 'Bank Entry'
+        journal_entry.user_remark = _('Payment of {0} from {1} to {2}')\
+        .format(user_remark, self.start_date, self.end_date)
+        journal_entry.company = self.company
+        journal_entry.posting_date = self.posting_date
+        journal_entry.multi_currency = multi_currency
+
+        journal_entry.set("accounts", accounts)
+        journal_entry.save(ignore_permissions= True)

@@ -153,10 +153,10 @@ override_doctype_class = {
 # erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = tyf_app.overrides.get_filter_condition
 
 
-import erpnext.payroll.doctype.payroll_entry.payroll_entry
-import tyf_app.overrides
+import _erpnext.payroll.doctype.payroll_entry.payroll_entry
+import _tyf_app.overrides
 
-erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = tyf_app.overrides.get_filter_condition
+_erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = _tyf_app.overrides.get_filter_condition
 
 #
 # each overriding function accepts a `data` argument;

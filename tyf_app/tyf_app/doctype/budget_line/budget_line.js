@@ -139,18 +139,23 @@ frappe.ui.form.on("Budget Line Child", {
 	},
   
 	bl_child_add: function(frm, cdt, cdn) {
+		if (frm.doc.project_code){
+			frappe.model.set_value(cdt, cdn, "project_code", frm.doc.project_code);
+		}
 		if(frm.doc.code != undefined){
 			var idx = frm.selected_doc.idx;
 			frappe.model.set_value(cdt, cdn, "code", frm.doc.code + "." + idx);
 			frm.events.increase_counter(frm);
 		} else {
 			frm.events.remove_child(frm);
-			// console.log(frm.doc.code);
 			frappe.throw(__("Please insert 'Code' value first."));	
 		}
 	},
   
 	bl_child_remove: function(frm, cdt, cdn) {
+		if (frm.doc.bl_child == ""){
+			frm.set_value("bl_child", undefined);
+		}
 		frm.events.decrease_counter(frm);
 		frm.events.calculate_parent_total_cost(frm, cdt, cdn);
 		frm.events.recalculate_child_code(frm, cdt, cdn);

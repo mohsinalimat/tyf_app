@@ -41,7 +41,7 @@
    "fieldtype": "Link",
    "label": "Project Code",
    "options": "Project",
-   "read_only_depends_on": "eval:doc.counter > 0",
+   "read_only_depends_on": "eval:doc.bl_child != undefined",
    "reqd": 1
   },
   {
@@ -75,7 +75,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-11-22 10:10:07.185353",
+ "modified": "2021-12-02 20:31:53.368269",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Line",

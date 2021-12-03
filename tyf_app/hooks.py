@@ -33,7 +33,15 @@ app_include_css = "/assets/tyf_app/css/tyf_app.css"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-doctype_js = {"Project" : "public/js/project.js"}
+doctype_js = {
+	"Project" : "public/js/project.js",
+	"Payroll Entry" : "public/js/payroll_entry.js",
+	"Employee" : "public/js/employee.js",
+	"Journal Entry" : "public/js/journal_entry.js"
+	}
+# doctype_js = {"Payroll Entry" : "public/js/payroll_entry.js"}
+# doctype_js = {"Employee" : "public/js/employee.js"}
+# doctype_js = {"Employee" : "public/js/employee.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -88,7 +96,8 @@ doctype_js = {"Project" : "public/js/project.js"}
 # }
 
 override_doctype_class = {
-	"Payroll Entry": "tyf_app.overrides.TYFPayrollEntry"
+	"Payroll Entry": "tyf_app.overrides.TYFPayrollEntry",
+	"Budget Line": "tyf_app.overrides.TYFDocument"
 }
 
 # Document Events
@@ -135,6 +144,20 @@ override_doctype_class = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "tyf_app.event.get_events"
 # }
+
+# Overriding Non-Whitelisted & Non-Class Methods
+# ------------------------------
+# import erpnext.payroll.doctype.payroll_entry.payroll_entry #Python file pathe that contine the original method
+# import tyf_app.overrides #Python file pathe that contine the custom method
+
+# erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = tyf_app.overrides.get_filter_condition
+
+
+import erpnext.payroll.doctype.payroll_entry.payroll_entry
+import tyf_app.overrides
+
+erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = tyf_app.overrides.get_filter_condition
+
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

@@ -3,6 +3,8 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
     get_accounting_dimensions,
 )
 from erpnext.payroll.doctype.payroll_entry.payroll_entry import PayrollEntry
+from frappe.model.document import Document
+from frappe.model.naming import _get_amended_name,  set_naming_from_document_naming_rule, make_autoname, set_name_from_naming_options, validate_name
 import frappe
 from frappe.utils import flt
 from frappe import _
@@ -14,7 +16,7 @@ class TYFPayrollEntry(PayrollEntry):
         salary_slips = self.get_sal_slip_list(ss_status=1, as_dict=True)
         if salary_slips:
             salary_components = frappe.db.sql("""
-				select ssd.salary_component, ssd.amount, ssd.parentfield, ss.payroll_cost_center, ss.employee
+				select ssd.salary_component, ssd.amount, ssd.parentfield, ss.payroll_cost_center, ss.employee, ss.budget_line
 				from `tabSalary Slip` ss, `tabSalary Detail` ssd
 				where ss.name = ssd.parent and ssd.parentfield = '%s' and ss.name in (%s)
 			""" % (component_type, ', '.join(['%s']*len(salary_slips))),
@@ -33,7 +35,7 @@ class TYFPayrollEntry(PayrollEntry):
                     if is_flexible_benefit == 1 and only_tax_impact == 1:
                         add_component_to_accrual_jv_entry = False
                 if add_component_to_accrual_jv_entry:
-                    component_dict[(item.salary_component, item.payroll_cost_center, item.employee)] \
+                    component_dict[(item.salary_component, item.payroll_cost_center, item.employee, item.budget_line)] \
                         = component_dict.get((item.salary_component, item.payroll_cost_center, item.employee), 0) + flt(item.amount)
             account_details = self.get_account(component_dict=component_dict)
             return account_details
@@ -42,8 +44,8 @@ class TYFPayrollEntry(PayrollEntry):
         account_dict = {}
         for key, amount in component_dict.items():
             account = self.get_salary_component_account(key[0])
-            account_dict[(account, key[1], key[2])] = account_dict.get(
-                (account, key[1], key[2]), 0) + amount
+            account_dict[(account, key[1], key[2], key[3])] = account_dict.get(
+                (account, key[1], key[2], key[3]), 0) + amount
         return account_dict
 
     def make_accrual_jv_entry(self):
@@ -97,7 +99,8 @@ class TYFPayrollEntry(PayrollEntry):
                         "debit_in_account_currency": flt(amt, precision),
                         "exchange_rate": flt(exchange_rate),
                         "cost_center": acc_cc[1] or self.cost_center,
-                        "project": self.project
+                        "project": self.project,
+                        "budget_line": acc_cc[3]
                     }
 
                 accounts.append(self.update_accounting_dimensions(
@@ -194,7 +197,7 @@ class TYFPayrollEntry(PayrollEntry):
                 party = salary_slip.employee
                 for sal_detail in salary_slip.earnings:
                     is_flexible_benefit, only_tax_impact, creat_separate_je, statistical_component = frappe.db.get_value("Salary Component", sal_detail.salary_component,
-                                                                                                                            ['is_flexible_benefit', 'only_tax_impact', 'create_separate_payment_entry_against_benefit_claim', 'statistical_component'])
+                                                                                                                         ['is_flexible_benefit', 'only_tax_impact', 'create_separate_payment_entry_against_benefit_claim', 'statistical_component'])
                     if only_tax_impact != 1 and statistical_component != 1:
                         if is_flexible_benefit == 1 and creat_separate_je == 1:
                             self.create_journal_entry(
@@ -228,18 +231,18 @@ class TYFPayrollEntry(PayrollEntry):
         if account_type in ["Receivable", "Payable"]:
             row = {
                 "account": self.payment_account,
-                    "bank_account": self.bank_account,
-                    "credit_in_account_currency": flt(amount, precision),
-                    "exchange_rate": flt(exchange_rate),
-                    "party_type": "Employee",
-                    "party": party
+                "bank_account": self.bank_account,
+                "credit_in_account_currency": flt(amount, precision),
+                "exchange_rate": flt(exchange_rate),
+                "party_type": "Employee",
+                "party": party
             }
         else:
             row = {
                 "account": self.payment_account,
-                    "bank_account": self.bank_account,
-                    "credit_in_account_currency": flt(amount, precision),
-                    "exchange_rate": flt(exchange_rate),
+                "bank_account": self.bank_account,
+                "credit_in_account_currency": flt(amount, precision),
+                "exchange_rate": flt(exchange_rate),
             }
         accounts.append(row)
 
@@ -250,12 +253,12 @@ class TYFPayrollEntry(PayrollEntry):
         if account_type in ["Receivable", "Payable"]:
             row = {
                 "account": payroll_payable_account,
-                    "debit_in_account_currency": flt(amount, precision),
-                    "exchange_rate": flt(exchange_rate),
-                    "reference_type": self.doctype,
-                    "reference_name": self.name,
-                    "party_type": "Employee",
-                    "party": party
+                "debit_in_account_currency": flt(amount, precision),
+                "exchange_rate": flt(exchange_rate),
+                "reference_type": self.doctype,
+                "reference_name": self.name,
+                "party_type": "Employee",
+                "party": party
             }
         else:
             row = {
@@ -264,7 +267,7 @@ class TYFPayrollEntry(PayrollEntry):
                 "exchange_rate": flt(exchange_rate),
                 "reference_type": self.doctype,
                 "reference_name": self.name
-                }
+            }
         accounts.append(row)
 
         if len(currencies) > 1:
@@ -273,10 +276,111 @@ class TYFPayrollEntry(PayrollEntry):
         journal_entry = frappe.new_doc('Journal Entry')
         journal_entry.voucher_type = 'Bank Entry'
         journal_entry.user_remark = _('Payment of {0} from {1} to {2}')\
-        .format(user_remark, self.start_date, self.end_date)
+            .format(user_remark, self.start_date, self.end_date)
         journal_entry.company = self.company
         journal_entry.posting_date = self.posting_date
         journal_entry.multi_currency = multi_currency
 
         journal_entry.set("accounts", accounts)
-        journal_entry.save(ignore_permissions= True)
+        journal_entry.save(ignore_permissions=True)
+
+
+    def make_filters(self):
+        filters = frappe._dict()
+        filters['company'] = self.company
+        filters['branch'] = self.branch
+        filters['department'] = self.department
+        filters['designation'] = self.designation
+        filters['project'] = self.project
+        return filters
+
+
+class TYFDocument(Document):
+
+    def set_new_name(self, force=False, set_name=None, set_child_names=True):
+        """Calls `frappe.naming.set_new_name` for parent and child docs."""
+        if self.flags.name_set and not force:
+            return
+
+            # If autoname has set as Prompt (name)
+        if self.get("__newname"):
+            self.name = self.get("__newname")
+            self.flags.name_set = True
+            return
+
+        if set_name:
+            self.name = set_name
+        else:
+            custom_set_new_name(self)
+
+        if set_child_names:
+            # set name for children
+            for d in self.get_all_children():
+                custom_set_new_name(d)
+
+def custom_set_new_name(doc):
+    """
+    Sets the `name` property for the document based on various rules.
+
+    1. If amended doc, set suffix.
+    2. If `autoname` method is declared, then call it.
+    3. If `autoname` property is set in the DocType (`meta`), then build it using the `autoname` property.
+    4. If no rule defined, use hash.
+
+    :param doc: Document to be named.
+    """
+
+    doc.run_method("before_naming")
+
+    autoname = frappe.get_meta(doc.doctype).autoname or ""
+
+    if autoname.lower() != "prompt" and not frappe.flags.in_import:
+        doc.name = None
+
+    if getattr(doc, "amended_from", None):
+        doc.name = _get_amended_name(doc)
+        return
+
+    elif getattr(doc.meta, "issingle", False):
+        doc.name = doc.doctype
+
+    # elif getattr(doc.meta, "istable", False):
+    # 	doc.name = make_autoname("hash", doc.doctype)
+
+    if not doc.name:
+        set_naming_from_document_naming_rule(doc)
+
+    if not doc.name:
+        doc.run_method("autoname")
+
+    if not doc.name and autoname:
+        set_name_from_naming_options(autoname, doc)
+
+    # if the autoname option is 'field:' and no name was derived, we need to
+    # notify
+    if not doc.name and autoname.startswith("field:"):
+        fieldname = autoname[6:]
+        frappe.throw(_("{0} is required").format(
+            doc.meta.get_label(fieldname)))
+
+    # at this point, we fall back to name generation with the hash option
+    if not doc.name and autoname == "hash":
+        doc.name = make_autoname("hash", doc.doctype)
+
+    if not doc.name:
+        doc.name = make_autoname("hash", doc.doctype)
+
+    doc.name = validate_name(
+        doc.doctype,
+        doc.name,
+        frappe.get_meta(doc.doctype).get_field("name_case")
+    ) 
+
+
+def get_filter_condition(filters):
+    cond = ''
+    for f in ['company', 'branch', 'department', 'designation', 'project']:
+        if filters.get(f):
+            cond += " and t1." + f + " = " + frappe.db.escape(filters.get(f))
+
+    return cond

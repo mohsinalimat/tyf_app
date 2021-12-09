@@ -385,7 +385,7 @@ def get_actual_details(name, filters):
 					b.{budget_against} = bl.project_code
 					and b.docstatus = 1
 					and gl.is_cancelled = 0
-					and bl.name=gl.budget_line
+					and bl.name=gl.budget_line_child
 					and b.{budget_against} = gl.{budget_against}
 					and gl.fiscal_year between %s and %s
 					and b.{budget_against} = %s

@@ -99,7 +99,7 @@ doctype_js = {
 override_doctype_class = {
 	"Payroll Entry": "tyf_app.overrides.TYFPayrollEntry",
 	# "Budget Line": "tyf_app.overrides.TYFDocument",
-	"Journal Entry": "tyf_app.overrides.TYFJournalEntry"
+	# "Journal Entry": "tyf_app.overrides.TYFJournalEntry"
 }
 
 # Document Events
@@ -156,12 +156,12 @@ override_doctype_class = {
 
 
 import erpnext.payroll.doctype.payroll_entry.payroll_entry as _erpnext_payroll_entry
-from erpnext.controllers.accounts_controller import AccountsController as _erpnext_controller
+# from erpnext.controllers.accounts_controller import AccountsController as _erpnext_controller
 import frappe.model.document as _frappe_document
 import tyf_app.overrides as _tyf_app_overrides
 
 _erpnext_payroll_entry.get_filter_condition = _tyf_app_overrides.get_filter_condition
-_erpnext_controller.get_gl_dict = _tyf_app_overrides.get_gl_dict
+# _erpnext_controller.get_gl_dict = _tyf_app_overrides.get_gl_dict
 _frappe_document.set_new_name = _tyf_app_overrides.custom_set_new_name
 
 #

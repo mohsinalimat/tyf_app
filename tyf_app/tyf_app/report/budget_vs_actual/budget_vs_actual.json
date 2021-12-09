@@ -1,5 +1,5 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
  "columns": [],
  "creation": "2021-12-04 20:16:01.856966",
  "disable_prepared_report": 0,
@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "TYF",
- "modified": "2021-12-04 20:16:01.856966",
+ "modified": "2021-12-09 19:40:56.821169",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Vs Actual",

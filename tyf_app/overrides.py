@@ -106,7 +106,7 @@ class TYFPayrollEntry(PayrollEntry):
                         "exchange_rate": flt(exchange_rate),
                         "cost_center": acc_cc[1] or self.cost_center,
                         "project": self.project,
-                        "budget_line": acc_cc[3]
+                        "budget_line_child": acc_cc[3]
                     }
 
                 accounts.append(self.update_accounting_dimensions(
@@ -300,47 +300,47 @@ class TYFPayrollEntry(PayrollEntry):
         filters['project'] = self.project
         return filters
 
-class TYFJournalEntry(JournalEntry):
-    def make_gl_entries(self, cancel=0, adv_adj=0):
-        from erpnext.accounts.general_ledger import make_gl_entries
+# class TYFJournalEntry(JournalEntry):
+#     def make_gl_entries(self, cancel=0, adv_adj=0):
+#         from erpnext.accounts.general_ledger import make_gl_entries
 
-        gl_map = []
-        for d in self.get("accounts"):
-            if d.debit or d.credit:
-                r = [d.user_remark, self.remark]
-                r = [x for x in r if x]
-                remarks = "\n".join(r)
+#         gl_map = []
+#         for d in self.get("accounts"):
+#             if d.debit or d.credit:
+#                 r = [d.user_remark, self.remark]
+#                 r = [x for x in r if x]
+#                 remarks = "\n".join(r)
 
-                gl_map.append(
-                    self.get_gl_dict({
-                        "account": d.account,
-                        "party_type": d.party_type,
-                        "due_date": self.due_date,
-                        "party": d.party,
-                        "budget_line": d.budget_line,
-                        "against": d.against_account,
-                        "debit": flt(d.debit, d.precision("debit")),
-                        "credit": flt(d.credit, d.precision("credit")),
-                        "account_currency": d.account_currency,
-                        "debit_in_account_currency": flt(d.debit_in_account_currency, d.precision("debit_in_account_currency")),
-                        "credit_in_account_currency": flt(d.credit_in_account_currency, d.precision("credit_in_account_currency")),
-                        "against_voucher_type": d.reference_type,
-                        "against_voucher": d.reference_name,
-                        "remarks": remarks,
-                        "voucher_detail_no": d.reference_detail_no,
-                        "cost_center": d.cost_center,
-                        "project": d.project,
-                        "finance_book": self.finance_book
-                    }, item=d)
-                )
+#                 gl_map.append(
+#                     self.get_gl_dict({
+#                         "account": d.account,
+#                         "party_type": d.party_type,
+#                         "due_date": self.due_date,
+#                         "party": d.party,
+#                         "budget_line_child": d.budget_line,
+#                         "against": d.against_account,
+#                         "debit": flt(d.debit, d.precision("debit")),
+#                         "credit": flt(d.credit, d.precision("credit")),
+#                         "account_currency": d.account_currency,
+#                         "debit_in_account_currency": flt(d.debit_in_account_currency, d.precision("debit_in_account_currency")),
+#                         "credit_in_account_currency": flt(d.credit_in_account_currency, d.precision("credit_in_account_currency")),
+#                         "against_voucher_type": d.reference_type,
+#                         "against_voucher": d.reference_name,
+#                         "remarks": remarks,
+#                         "voucher_detail_no": d.reference_detail_no,
+#                         "cost_center": d.cost_center,
+#                         "project": d.project,
+#                         "finance_book": self.finance_book
+#                     }, item=d)
+#                 )
 
-        if self.voucher_type in ('Deferred Revenue', 'Deferred Expense'):
-            update_outstanding = 'No'
-        else:
-            update_outstanding = 'Yes'
+#         if self.voucher_type in ('Deferred Revenue', 'Deferred Expense'):
+#             update_outstanding = 'No'
+#         else:
+#             update_outstanding = 'Yes'
 
-        if gl_map:
-            make_gl_entries(gl_map, cancel=cancel, adv_adj=adv_adj, update_outstanding=update_outstanding)
+#         if gl_map:
+#             make_gl_entries(gl_map, cancel=cancel, adv_adj=adv_adj, update_outstanding=update_outstanding)
 
 
 def set_new_name(self, force=False, set_name=None, set_child_names=True):
@@ -432,55 +432,55 @@ def get_filter_condition(filters):
 
     return cond
 
-def get_gl_dict(self, args, account_currency=None, item=None):
-    """this method populates the common properties of a gl entry record"""
-    print("Its TYF")
-    posting_date = args.get('posting_date') or self.get('posting_date')
-    fiscal_years = get_fiscal_years(posting_date, company=self.company)
-    if len(fiscal_years) > 1:
-        frappe.throw(_("Multiple fiscal years exist for the date {0}. Please set company in Fiscal Year").format(
-            formatdate(posting_date)))
-    else:
-        fiscal_year = fiscal_years[0][0]
+# def get_gl_dict(self, args, account_currency=None, item=None):
+#     """this method populates the common properties of a gl entry record"""
+#     # print("Its TYF")
+#     posting_date = args.get('posting_date') or self.get('posting_date')
+#     fiscal_years = get_fiscal_years(posting_date, company=self.company)
+#     if len(fiscal_years) > 1:
+#         frappe.throw(_("Multiple fiscal years exist for the date {0}. Please set company in Fiscal Year").format(
+#             formatdate(posting_date)))
+#     else:
+#         fiscal_year = fiscal_years[0][0]
 
-    gl_dict = frappe._dict({
-        'company': self.company,
-        'posting_date': posting_date,
-        'fiscal_year': fiscal_year,
-        'voucher_type': self.doctype,
-        'voucher_no': self.name,
-        'remarks': self.get("remarks") or self.get("remark"),
-        'debit': 0,
-        'credit': 0,
-        'debit_in_account_currency': 0,
-        'credit_in_account_currency': 0,
-        'is_opening': self.get("is_opening") or "No",
-        'party_type': None,
-        'party': None,
-        'budget_line': self.get("budget_line"),
-        'project': self.get("project")
-    })
+#     gl_dict = frappe._dict({
+#         'company': self.company,
+#         'posting_date': posting_date,
+#         'fiscal_year': fiscal_year,
+#         'voucher_type': self.doctype,
+#         'voucher_no': self.name,
+#         'remarks': self.get("remarks") or self.get("remark"),
+#         'debit': 0,
+#         'credit': 0,
+#         'debit_in_account_currency': 0,
+#         'credit_in_account_currency': 0,
+#         'is_opening': self.get("is_opening") or "No",
+#         'party_type': None,
+#         'party': None,
+#         'budget_line': self.get("budget_line"),
+#         'project': self.get("project")
+#     })
 
-    accounting_dimensions = get_accounting_dimensions()
-    dimension_dict = frappe._dict()
+#     accounting_dimensions = get_accounting_dimensions()
+#     dimension_dict = frappe._dict()
 
-    for dimension in accounting_dimensions:
-        dimension_dict[dimension] = self.get(dimension)
-        if item and item.get(dimension):
-            dimension_dict[dimension] = item.get(dimension)
+#     for dimension in accounting_dimensions:
+#         dimension_dict[dimension] = self.get(dimension)
+#         if item and item.get(dimension):
+#             dimension_dict[dimension] = item.get(dimension)
 
-    gl_dict.update(dimension_dict)
-    gl_dict.update(args)
+#     gl_dict.update(dimension_dict)
+#     gl_dict.update(args)
 
-    if not account_currency:
-        account_currency = get_account_currency(gl_dict.account)
+#     if not account_currency:
+#         account_currency = get_account_currency(gl_dict.account)
 
-    if gl_dict.account and self.doctype not in ["Journal Entry",
-        "Period Closing Voucher", "Payment Entry", "Purchase Receipt", "Purchase Invoice", "Stock Entry"]:
-        self.validate_account_currency(gl_dict.account, account_currency)
+#     if gl_dict.account and self.doctype not in ["Journal Entry",
+#         "Period Closing Voucher", "Payment Entry", "Purchase Receipt", "Purchase Invoice", "Stock Entry"]:
+#         self.validate_account_currency(gl_dict.account, account_currency)
 
-    if gl_dict.account and self.doctype not in ["Journal Entry", "Period Closing Voucher", "Payment Entry"]:
-        set_balance_in_account_currency(gl_dict, account_currency, self.get("conversion_rate"),
-                                        self.company_currency)
+#     if gl_dict.account and self.doctype not in ["Journal Entry", "Period Closing Voucher", "Payment Entry"]:
+#         set_balance_in_account_currency(gl_dict, account_currency, self.get("conversion_rate"),
+#                                         self.company_currency)
 
-    return gl_dict
+#     return gl_dict

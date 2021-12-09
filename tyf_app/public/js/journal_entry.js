@@ -5,7 +5,7 @@ frappe.ui.form.on("Journal Entry", {
     },
 
     set_filters: (frm) => {
-        frm.fields_dict['accounts'].grid.get_field('budget_line').get_query = function(doc, cdt, cdn) {
+        frm.fields_dict['accounts'].grid.get_field('budget_line_child').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
 			return {    
 				filters:[
@@ -21,7 +21,7 @@ frappe.ui.form.on("Journal Entry Account", {
 	project: (frm, cdt, cdn) => {
 		let row = frm.selected_doc;
 		if(!row.project){
-			frappe.model.set_value(cdt, cdn, "budget_line", undefined);
+			frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
 			frappe.model.set_value(cdt, cdn, "cost_center", undefined);
 			cur_frm.refresh();
 		} 

@@ -22,6 +22,7 @@ frappe.ui.form.on("Journal Entry Account", {
 		let row = frm.selected_doc;
 		if(!row.project){
 			frappe.model.set_value(cdt, cdn, "budget_line", undefined);
+			frappe.model.set_value(cdt, cdn, "cost_center", undefined);
 			cur_frm.refresh();
 		} 
 	}

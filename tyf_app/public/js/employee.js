@@ -41,7 +41,8 @@ frappe.ui.form.on("Employee", {
             }
 			return {
 				filters: {
-					"project_code": project_code
+					"project_code": project_code,
+                    "docstatus": 1
 				}
 			};
 		});

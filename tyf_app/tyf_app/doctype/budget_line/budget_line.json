@@ -14,7 +14,8 @@
   "total_cost",
   "budget_line_child_section",
   "bl_child",
-  "counter"
+  "counter",
+  "amended_from"
  ],
  "fields": [
   {
@@ -30,7 +31,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Code",
-   "read_only": 1
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_3",
@@ -71,11 +72,21 @@
    "fieldtype": "Int",
    "hidden": 1,
    "label": "counter"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Budget Line",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2021-12-02 20:31:53.368269",
+ "modified": "2021-12-08 12:10:56.129114",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Line",

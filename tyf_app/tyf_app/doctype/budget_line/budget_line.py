@@ -2,10 +2,14 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _ 
 from frappe.model.document import Document
 
 class BudgetLine(Document):
-	pass
+	def validate(self):
+		print("=== validate ===")
+		frappe.msgprint(_("is active"))
+
 
 @frappe.whitelist()
 def get_budget_line_doc(project_code):
@@ -25,7 +29,7 @@ def get_budget_line_chiled(project_code):
 	account_ditails = []
 	parents = frappe.get_all(
 		'Budget Line',
-		filters={'project_code': project_code},
+		filters={'project_code': project_code, 'docstatus': 1},
 		fields=[
 			'name'
 			], order_by='code')
@@ -52,7 +56,6 @@ def get_budget_line_chiled(project_code):
 					old = False
 					for acc in account_ditails:
 						if acc['account'] == child.account:
-							# print("***** ", acc['account'])
 							acc['budget_amount'] += child.total_cost
 							old = True
 					if not old:
@@ -64,13 +67,14 @@ def get_budget_line_chiled(project_code):
 
 
 @frappe.whitelist()
-def get_budget_line(project_code):
+def get_budget_line(project_code, show_draft, show_cancelled):
 	data = []
 	parents = frappe.get_all(
 		'Budget Line',
-		filters={'project_code': project_code},
+		filters={'project_code': project_code, 'docstatus': ['in', ['1', show_draft, show_cancelled]]},
 		fields=[
 			'code',
+			'docstatus',
 			'description',
 			'name',
 			'total_cost'
@@ -80,6 +84,7 @@ def get_budget_line(project_code):
 			"name": parent.name,
 			"type": "parent",
 			"code": parent.code,
+			"status": parent.docstatus,
 			"description": parent.description,
 			"total_cost": frappe.format(parent.total_cost, 'Currency')
 			})
@@ -126,7 +131,7 @@ def get_footer(project_code, percent):
 	p_total = 0
 	parents = frappe.get_all(
 		'Budget Line',
-		filters={'project_code': project_code},
+		filters={'project_code': project_code, 'docstatus': 1},
 		fields=[
 			'name',
 			'total_cost'
@@ -187,7 +192,7 @@ def get_latest_parent_code(project_code):
 	max = 0
 	parents = frappe.get_all(
 		'Budget Line',
-		filters={'project_code': project_code},
+		filters={'project_code': project_code, 'docstatus': ['<', 2]},
 		fields=[
 			'code'
 			], order_by='code')
@@ -197,3 +202,16 @@ def get_latest_parent_code(project_code):
 			if max < parents[i].code:
 				max = parents[i].code
 	return int(max) + 1
+
+@frappe.whitelist()
+def get_amended_doc_code(doc_name):
+	amended = frappe.db.get_value(
+		'Budget Line',
+		doc_name,
+		['code']
+	)
+	return amended
+
+@frappe.whitelist()
+def delete_amended_from_doc(doc_name):
+	frappe.delete_doc("Budget Line", doc_name)

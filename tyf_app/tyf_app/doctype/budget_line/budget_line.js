@@ -4,6 +4,10 @@
 frappe.ui.form.on('Budget Line', {
 
 	refresh: function(frm) {
+		if (frm.is_new() && frm.doc.amended_from){
+			
+			// frm.set_value
+		}
 		frm.fields_dict['bl_child'].grid.get_field('account').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
 			return {    
@@ -14,13 +18,34 @@ frappe.ui.form.on('Budget Line', {
 		}
 	},
 
+	// before_save: (frm) => {
+	// 	if(frm.doc.amended_from){
+	// 		frm.set_value("amended_from", undefined);
+	// 	}
+	// },
+	validate: (frm) => {
+		if (frm.doc.amended_from){
+			frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.delete_amended_from_doc', {
+				'doc_name': frm.doc.amended_from
+			  }).then(r => {
+				frm.set_value("amended_from", undefined);
+			  });
+		}
+	},
 	onload: (frm) => {
 		if(frm.doc.project_code && frm.doc.__islocal){
-			frm.events.get_max_parent_code(frm);
+			if(frm.doc.amended_from){
+				frm.events.get_amended_doc_code(frm);
+			} else {
+				frm.events.get_max_parent_code(frm);
+			}
 		}
 	},
 
 	project_code: (frm) => {
+		if(frm.doc.amended_from){
+			frm.set_value("amended_from", undefined);
+		}
 		if(frm.doc.project_code){
 			frm.events.get_max_parent_code(frm);
 		} else {
@@ -90,6 +115,14 @@ frappe.ui.form.on('Budget Line', {
 			frm.set_value("code", r);
 		  });
 	},
+
+	get_amended_doc_code: (frm) => {
+		frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_amended_doc_code', {
+			'doc_name': frm.doc.amended_from
+		  }).then(r => {
+			frm.set_value("code", r);
+		  });
+	}
 });
 
 

@@ -73,9 +73,13 @@ table td.r, table th.r {
     content: "B.L Description";
   }
   table #t_body #t_parent td:nth-child(3):before {
-    content: "D / S";
+    content: "Status";
+    text-align: left;
   }
   table #t_body #t_parent td:nth-child(4):before {
+    content: "Total Cost";
+  }
+  table #t_body #t_parent td:nth-child(5):before {
     content: "Edit";
   }
   table #t_body #t_child td:nth-child(1):before {

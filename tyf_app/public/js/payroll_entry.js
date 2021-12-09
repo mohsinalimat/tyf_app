@@ -4,7 +4,8 @@ frappe.ui.form.on("Payroll Entry", {
 			var child = locals[cdt][cdn];
 			return {    
 				filters:[
-					['project_code', '=', frm.doc.project]
+					['project_code', '=', frm.doc.project],
+                    ['docstatus', '=', 1]
 				]
 			}
 		}

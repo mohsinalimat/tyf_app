@@ -366,7 +366,6 @@ def set_new_name(self, force=False, set_name=None, set_child_names=True):
 
 
 def custom_set_new_name(doc):
-    print("+++ TYF +++")
     """
     Sets the `name` property for the document based on various rules.
 

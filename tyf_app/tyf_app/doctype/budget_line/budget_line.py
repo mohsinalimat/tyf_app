@@ -6,9 +6,10 @@ from frappe import _
 from frappe.model.document import Document
 
 class BudgetLine(Document):
-	def validate(self):
-		print("=== validate ===")
-		frappe.msgprint(_("is active"))
+	# def validate(self):
+	# 	print("=== validate ===")
+	# 	frappe.msgprint(_("is active"))
+	pass
 
 
 @frappe.whitelist()

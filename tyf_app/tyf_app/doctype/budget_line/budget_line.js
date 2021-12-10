@@ -133,11 +133,11 @@ frappe.ui.form.on("Budget Line Child", {
 	quantity: (frm, cdt, cdn) => {
 		let row = frm.selected_doc;
 		if(row.quantity == ''){
+			console.log("Yes");
 			frappe.model.set_value(cdt, cdn, "quantity", 0);
 			cur_frm.refresh();
-		} else {
-			frm.events.calculate_total_cost(frm, cdt, cdn);
 		}
+		frm.events.calculate_total_cost(frm, cdt, cdn);
 
 	},
 
@@ -146,9 +146,9 @@ frappe.ui.form.on("Budget Line Child", {
 		if(row.unit_cost == ''){
 			frappe.model.set_value(cdt, cdn, "unit_cost", 0);
 			cur_frm.refresh();
-		} else {
-			frm.events.calculate_total_cost(frm, cdt, cdn);
 		}
+		frm.events.calculate_total_cost(frm, cdt, cdn);
+
 	},
 
 	duration: (frm, cdt, cdn) => {
@@ -156,9 +156,9 @@ frappe.ui.form.on("Budget Line Child", {
 		if(row.duration == ''){
 			frappe.model.set_value(cdt, cdn, "duration", 0);
 			cur_frm.refresh();
-		} else {
-			frm.events.calculate_total_cost(frm, cdt, cdn);
 		}
+		frm.events.calculate_total_cost(frm, cdt, cdn);
+
 	},
 
 	charge: (frm, cdt, cdn) => {
@@ -166,9 +166,9 @@ frappe.ui.form.on("Budget Line Child", {
 		if(row.charge == ''){
 			frappe.model.set_value(cdt, cdn, "charge", 0);
 			cur_frm.refresh();
-		} else {
-			frm.events.calculate_total_cost(frm, cdt, cdn);
 		}
+		frm.events.calculate_total_cost(frm, cdt, cdn);
+
 	},
   
 	bl_child_add: function(frm, cdt, cdn) {

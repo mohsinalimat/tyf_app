@@ -80,7 +80,7 @@ frappe.ui.form.on('Budget Line', {
 		cur_frm.refresh();
 	},
 	calculate_total_cost: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
 		frappe.model.set_value(cdt, cdn, "total_cost", ((row.quantity * row.unit_cost) * row.duration) * (row.charge / 100));
 		frm.events.calculate_parent_total_cost(frm, cdt, cdn);
 	},
@@ -131,9 +131,8 @@ frappe.ui.form.on('Budget Line', {
 frappe.ui.form.on("Budget Line Child", {
 
 	quantity: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
 		if(row.quantity == ''){
-			console.log("Yes");
 			frappe.model.set_value(cdt, cdn, "quantity", 0);
 			cur_frm.refresh();
 		}
@@ -142,7 +141,7 @@ frappe.ui.form.on("Budget Line Child", {
 	},
 
 	unit_cost: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
 		if(row.unit_cost == ''){
 			frappe.model.set_value(cdt, cdn, "unit_cost", 0);
 			cur_frm.refresh();
@@ -152,7 +151,7 @@ frappe.ui.form.on("Budget Line Child", {
 	},
 
 	duration: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
 		if(row.duration == ''){
 			frappe.model.set_value(cdt, cdn, "duration", 0);
 			cur_frm.refresh();
@@ -162,7 +161,7 @@ frappe.ui.form.on("Budget Line Child", {
 	},
 
 	charge: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
 		if(row.charge == ''){
 			frappe.model.set_value(cdt, cdn, "charge", 0);
 			cur_frm.refresh();
@@ -176,7 +175,7 @@ frappe.ui.form.on("Budget Line Child", {
 			frappe.model.set_value(cdt, cdn, "project_code", frm.doc.project_code);
 		}
 		if(frm.doc.code != undefined){
-			var idx = frm.selected_doc.idx;
+			var idx = locals[cdt][cdn].idx;
 			frappe.model.set_value(cdt, cdn, "code", frm.doc.code + "." + idx);
 			frm.events.increase_counter(frm);
 		} else {

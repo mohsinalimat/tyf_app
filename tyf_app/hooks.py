@@ -114,6 +114,14 @@ override_doctype_class = {
 #	}
 # }
 
+doc_events = {
+	"Journal Entry": {
+		"before_save": "tyf_app.tyf_app.validations.journal_entry.validate_jv"
+		# "on_cancel": "method",
+		# "on_trash": "method"
+	}
+}
+
 # Scheduled Tasks
 # ---------------
 

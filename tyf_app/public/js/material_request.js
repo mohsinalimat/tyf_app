@@ -1,14 +1,10 @@
 frappe.ui.form.on('Material Request', {
-    // setup: function(frm) {
-        
-    // },
+    
     onload: function(frm) {
         frm.events.set_filters(frm);
 	},
 
-
     set_filters: (frm) => {
-        console.log("yesss set_filters");
 		frm.fields_dict['items'].grid.get_field('budget_line_child').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
 			return {   
@@ -143,7 +139,6 @@ frappe.ui.form.on('Material Request', {
         frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_bl_account', {
             'bl_name': row.budget_line_child
           }).then(r => {
-              console.log("r = " + r);
               frappe.model.set_value(cdt, cdn, "expense_account", r);
           });
     },
@@ -154,11 +149,10 @@ frappe.ui.form.on("Material Request Item", {
     
     project: (frm, cdt, cdn) => {
         let row = locals[cdt][cdn];
+        frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
+        frappe.model.set_value(cdt, cdn, "expense_account", undefined);
         if (!row.project) {
             frappe.model.set_value(cdt, cdn, "cost_center", undefined);
-            frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
-            frappe.model.set_value(cdt, cdn, "expense_account", undefined);
-
         }
     },
 

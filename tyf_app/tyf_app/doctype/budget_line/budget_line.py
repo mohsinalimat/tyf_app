@@ -13,7 +13,7 @@ class BudgetLine(Document):
 
 	def set_new_name(self, force=False, set_name=None, set_child_names=True):
 		"""Calls `frappe.naming.set_new_name` for parent and child docs."""
-		print("ITS TYF set_new_name")
+		# print("ITS TYF set_new_name")
 		if self.flags.name_set and not force:
 			return
 
@@ -37,7 +37,7 @@ class BudgetLine(Document):
 
 
 def custom_set_new_name(doc):
-    print("ITS TYF custom_set_new_name")
+    # print("ITS TYF custom_set_new_name")
     """
     Sets the `name` property for the document based on various rules.
 

@@ -1,6 +1,6 @@
 frappe.ui.form.on("Journal Entry", {
 
-    onload: function (frm) {
+    onload_post_render: function (frm) {
         frm.events.set_filters(frm);
     },
 
@@ -13,18 +13,36 @@ frappe.ui.form.on("Journal Entry", {
 				]
 			}
 		}
-    }
+    },
+
+	get_bl_account: (frm, cdt,cdn) => {
+        let row = locals[cdt][cdn];
+        frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_bl_account', {
+            'bl_name': row.budget_line_child
+          }).then(r => {
+              frappe.model.set_value(cdt, cdn, "account", r);
+          });
+    },
 });
 
 frappe.ui.form.on("Journal Entry Account", {
 
 	project: (frm, cdt, cdn) => {
-		let row = frm.selected_doc;
+		let row = locals[cdt][cdn];
+		frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
+		frappe.model.set_value(cdt, cdn, "account", undefined);
 		if(!row.project){
-			frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
 			frappe.model.set_value(cdt, cdn, "cost_center", undefined);
-			frappe.model.set_value(cdt, cdn, "account", undefined);
-			cur_frm.refresh();
-		} 
-	}
+		}
+		cur_frm.refresh();
+	},
+
+	budget_line_child: (frm, cdt, cdn) => {
+        let row = locals[cdt][cdn];
+        if (!row.budget_line_child) {
+            frappe.model.set_value(cdt, cdn, "account", undefined);
+        } else {
+            frm.events.get_bl_account(frm, cdt, cdn);
+        }
+    },
 });

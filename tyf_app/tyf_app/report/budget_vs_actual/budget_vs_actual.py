@@ -16,10 +16,10 @@ from erpnext.controllers.trends import get_period_date_ranges, get_period_month_
 def execute(filters=None):
 	if not filters:
 		filters = {}
-	dimensions = []
+	# dimensions = []
 	columns = get_columns(filters)
-	if filters.budget_against_filter:
-		dimensions.append(filters.budget_against_filter)
+	if filters.get("budget_against_filter"):
+		dimensions = filters.get("budget_against_filter")
 	else:
 		dimensions = get_cost_centers(filters)
 
@@ -225,12 +225,9 @@ def get_dimension_target_details(filters):
 	budget_against = frappe.scrub(filters.get("budget_against"))
 	cond = ""
 	if filters.get("budget_against_filter"):
-		print("TYF.budget_against_filter = ", filters.budget_against_filter)
 		cond += """ and b.{budget_against} in (%s)""".format(
 			budget_against=budget_against) % ", ".join(["%s"] * len(filters.get("budget_against_filter")))
-		# cond += """ and b.{budget_against} = '{budget_against_filter}'""".format(
-		# 	budget_against=budget_against,
-		# 	budget_against_filter=filters.budget_against_filter)
+
 	if filters.budget_against == "Project":
 		return frappe.db.sql(
 			"""
@@ -253,7 +250,7 @@ def get_dimension_target_details(filters):
 					and b.company = %s
 					{cond}
 				order by
-					b.fiscal_year, INET_ATON(SUBSTRING_INDEX(CONCAT(bl.code,'.0.0.0'),'.',4));
+					b.fiscal_year, INET_ATON(SUBSTRING_INDEX(CONCAT(bl.code,'.0.0.0'),'.',4))
 			""".format(
 				cond=cond
 			),
@@ -389,6 +386,7 @@ def get_actual_details(name, filters):
 					and b.docstatus = 1
 					and gl.is_cancelled = 0
 					and bl.name = gl.budget_line_child
+					and bl.account = gl.account
 					and b.{budget_against} = gl.{budget_against}
 					and gl.fiscal_year between %s and %s
 					and b.{budget_against} = %s
@@ -456,7 +454,6 @@ def get_dimension_account_month_map(filters):
 			for ad in actual_details.get(budget_for, []):
 				if ad.month_name == month and ad.fiscal_year == ccd.fiscal_year:
 					tav_dict.actual += flt(ad.debit) - flt(ad.credit)
-
 	return cam_map
 
 

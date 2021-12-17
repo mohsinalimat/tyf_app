@@ -138,7 +138,6 @@ frappe.ui.form.on('Budget Line', {
 	},
 
 	toggle_fields_based_on_currency: (frm) => {
-		console.log("yESE");
 		var fields = [
 			"currency_section",
 			"account_currency",
@@ -279,7 +278,6 @@ frappe.ui.form.on("Budget Line Child", {
 	},
   
 	bl_child_add: function(frm, cdt, cdn) {
-		console.log("counter = " + frm.doc.counter)
 		if (frm.doc.project_code){
 			frappe.model.set_value(cdt, cdn, "project_code", frm.doc.project_code);
 			frm.events.get_company_currency(frm, cdt, cdn);

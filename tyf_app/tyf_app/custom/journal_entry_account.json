@@ -69,14 +69,14 @@
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-   "creation": "2021-12-17 20:48:56.311055",
+   "creation": "2021-12-17 21:20:41.888755",
    "default_value": null,
    "doc_type": "Journal Entry Account",
    "docstatus": 0,
    "doctype_or_field": "DocField",
    "field_name": "account",
    "idx": 0,
-   "modified": "2021-12-17 20:48:56.311055",
+   "modified": "2021-12-17 21:20:41.888755",
    "modified_by": "Administrator",
    "name": "Journal Entry Account-account-fetch_from",
    "owner": "Administrator",
@@ -86,7 +86,7 @@
    "property": "fetch_from",
    "property_type": "Small Text",
    "row_name": null,
-   "value": "budget_line_child.account"
+   "value": ""
   },
   {
    "_assign": null,

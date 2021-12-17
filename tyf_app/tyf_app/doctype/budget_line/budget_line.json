@@ -8,14 +8,17 @@
  "engine": "InnoDB",
  "field_order": [
   "description",
+  "custom_code",
   "code",
   "column_break_3",
   "project_code",
+  "company",
+  "multi_currency",
   "total_cost",
   "budget_line_child_section",
   "bl_child",
-  "counter",
-  "amended_from"
+  "amended_from",
+  "counter"
  ],
  "fields": [
   {
@@ -42,7 +45,7 @@
    "fieldtype": "Link",
    "label": "Project Code",
    "options": "Project",
-   "read_only_depends_on": "eval:doc.bl_child != undefined",
+   "read_only_depends_on": "eval:doc.counter > 0",
    "reqd": 1
   },
   {
@@ -51,6 +54,7 @@
    "fieldname": "total_cost",
    "fieldtype": "Currency",
    "label": "Total Cost",
+   "options": "Company:company:default_currency",
    "precision": "2",
    "read_only": 1
   },
@@ -69,14 +73,6 @@
    "options": "Budget Line Child"
   },
   {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "counter",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "counter"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -84,12 +80,44 @@
    "options": "Budget Line",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_code",
+   "fieldtype": "Check",
+   "label": "Custom Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "multi_currency",
+   "fieldtype": "Check",
+   "label": "Multi Currency",
+   "read_only_depends_on": "eval:doc.counter > 0"
+  },
+  {
+   "default": "0",
+   "fieldname": "counter",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Counter",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "report_hide": 1
+  },
+  {
+   "default": "None",
+   "fetch_from": "project_code.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-10 20:21:50.188709",
+ "modified": "2021-12-15 23:18:14.974480",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Line",

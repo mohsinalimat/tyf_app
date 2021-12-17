@@ -145,6 +145,7 @@ frappe.ui.form.on("Project", {
       'show_cancelled': frm.doc.show_cancelled_budget_lines ? "2" : "1"
     }).then(r => {
       frm.events.add_row(frm, r);
+      refresh_field('bl_html');
     });
   },
 
@@ -154,6 +155,7 @@ frappe.ui.form.on("Project", {
       'percent': frm.doc.psc_cost_percent
     }).then(r => {
       frm.events.add_row_footer(frm, r);
+      refresh_field('bl_html');
     });
   },
 

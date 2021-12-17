@@ -7,7 +7,7 @@ from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
 from erpnext.controllers.accounts_controller import set_balance_in_account_currency
 from erpnext.accounts.utils import get_account_currency, get_fiscal_years
 from frappe.model.document import Document
-from frappe.model.naming import _get_amended_name,  set_naming_from_document_naming_rule, make_autoname, set_name_from_naming_options, validate_name
+# from frappe.model.naming import _get_amended_name,  set_naming_from_document_naming_rule, make_autoname, set_name_from_naming_options, validate_name
 import frappe
 from frappe.utils import (
     flt,
@@ -343,85 +343,88 @@ class TYFPayrollEntry(PayrollEntry):
 #             make_gl_entries(gl_map, cancel=cancel, adv_adj=adv_adj, update_outstanding=update_outstanding)
 
 
-def set_new_name(self, force=False, set_name=None, set_child_names=True):
-    """Calls `frappe.naming.set_new_name` for parent and child docs."""
-    if self.flags.name_set and not force:
-        return
+# def set_new_name(self, force=False, set_name=None, set_child_names=True):
+#     """Calls `frappe.naming.set_new_name` for parent and child docs."""
+#     print("ITS TYF set_new_name")
+#     if self.flags.name_set and not force:
+#         return
 
-        # If autoname has set as Prompt (name)
-    if self.get("__newname"):
-        self.name = self.get("__newname")
-        self.flags.name_set = True
-        return
+#         # If autoname has set as Prompt (name)
+#     if self.get("__newname"):
+#         self.name = self.get("__newname")
+#         self.flags.name_set = True
+#         return
 
-    if set_name:
-        self.name = set_name
-    else:
-        custom_set_new_name(self)
+#     if set_name:
+#         self.name = set_name
+#     else:
+#         custom_set_new_name(self)
 
-    if set_child_names:
-        # set name for children
-        for d in self.get_all_children():
-            custom_set_new_name(d)
+#     if set_child_names:
+#         # set name for children
+#         for d in self.get_all_children():
+            
+#             custom_set_new_name(d)
 
 
-def custom_set_new_name(doc):
-    """
-    Sets the `name` property for the document based on various rules.
+# def custom_set_new_name(doc):
+#     print("ITS TYF custom_set_new_name")
+#     """
+#     Sets the `name` property for the document based on various rules.
 
-    1. If amended doc, set suffix.
-    2. If `autoname` method is declared, then call it.
-    3. If `autoname` property is set in the DocType (`meta`), then build it using the `autoname` property.
-    4. If no rule defined, use hash.
+#     1. If amended doc, set suffix.
+#     2. If `autoname` method is declared, then call it.
+#     3. If `autoname` property is set in the DocType (`meta`), then build it using the `autoname` property.
+#     4. If no rule defined, use hash.
 
-    :param doc: Document to be named.
-    """
+#     :param doc: Document to be named.
+#     """
 
-    doc.run_method("before_naming")
+#     doc.run_method("before_naming")
 
-    autoname = frappe.get_meta(doc.doctype).autoname or ""
+#     autoname = frappe.get_meta(doc.doctype).autoname or ""
 
-    if autoname.lower() != "prompt" and not frappe.flags.in_import:
-        doc.name = None
+#     if autoname.lower() != "prompt" and not frappe.flags.in_import:
+#         doc.name = None
 
-    if getattr(doc, "amended_from", None):
-        doc.name = _get_amended_name(doc)
-        return
+#     if getattr(doc, "amended_from", None):
+#         doc.name = _get_amended_name(doc)
+#         return
 
-    elif getattr(doc.meta, "issingle", False):
-        doc.name = doc.doctype
+#     elif getattr(doc.meta, "issingle", False):
+#         doc.name = doc.doctype
 
-    # elif getattr(doc.meta, "istable", False):
-    # 	doc.name = make_autoname("hash", doc.doctype)
+#     # elif getattr(doc.meta, "istable", False):
+#     # 	doc.name = make_autoname("hash", doc.doctype)
 
-    if not doc.name:
-        set_naming_from_document_naming_rule(doc)
+#     if not doc.name:
+#         set_naming_from_document_naming_rule(doc)
 
-    if not doc.name:
-        doc.run_method("autoname")
+#     if not doc.name:
+#         doc.run_method("autoname")
 
-    if not doc.name and autoname:
-        set_name_from_naming_options(autoname, doc)
+#     if not doc.name and autoname:
+#         set_name_from_naming_options(autoname, doc)
 
-    # if the autoname option is 'field:' and no name was derived, we need to
-    # notify
-    if not doc.name and autoname.startswith("field:"):
-        fieldname = autoname[6:]
-        frappe.throw(_("{0} is required").format(
-            doc.meta.get_label(fieldname)))
+#     # if the autoname option is 'field:' and no name was derived, we need to
+#     # notify
+#     if not doc.name and autoname.startswith("field:"):
+#         fieldname = autoname[6:]
+#         frappe.throw(_("{0} is required").format(
+#             doc.meta.get_label(fieldname)))
 
-    # at this point, we fall back to name generation with the hash option
-    if not doc.name and autoname == "hash":
-        doc.name = make_autoname("hash", doc.doctype)
+#     # at this point, we fall back to name generation with the hash option
+#     if not doc.name and autoname == "hash":
+#         doc.name = make_autoname("hash", doc.doctype)
 
-    if not doc.name:
-        doc.name = make_autoname("hash", doc.doctype)
+#     if not doc.name:
+#         doc.name = make_autoname("hash", doc.doctype)
 
-    doc.name = validate_name(
-        doc.doctype,
-        doc.name,
-        frappe.get_meta(doc.doctype).get_field("name_case")
-    ) 
+#     doc.name = validate_name(
+#         doc.doctype,
+#         doc.name,
+#         frappe.get_meta(doc.doctype).get_field("name_case")
+#     ) 
 
 
 def get_filter_condition(filters):

@@ -225,6 +225,7 @@ def get_dimension_target_details(filters):
 	budget_against = frappe.scrub(filters.get("budget_against"))
 	cond = ""
 	if filters.budget_against_filter:
+		print("filters.budget_against_filter = ", filters.budget_against_filter)
 		cond += """ and b.{budget_against} = '{budget_against_filter}'""".format(
 			budget_against=budget_against,
 			budget_against_filter=filters.budget_against_filter)

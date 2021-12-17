@@ -1,6 +1,6 @@
 frappe.ui.form.on("Journal Entry", {
 
-    refresh: function (frm) {
+    onload: function (frm) {
         frm.events.set_filters(frm);
     },
 
@@ -23,6 +23,7 @@ frappe.ui.form.on("Journal Entry Account", {
 		if(!row.project){
 			frappe.model.set_value(cdt, cdn, "budget_line_child", undefined);
 			frappe.model.set_value(cdt, cdn, "cost_center", undefined);
+			frappe.model.set_value(cdt, cdn, "account", undefined);
 			cur_frm.refresh();
 		} 
 	}

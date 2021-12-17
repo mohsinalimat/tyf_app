@@ -54,13 +54,26 @@ frappe.query_reports["Budget Vs Actual"] = {
 				
 			}
 		},
+		// {
+		// 	fieldname:"budget_against_filter",
+		// 	label: __('Dimension Filter'),
+		// 	fieldtype: "Dynamic Link",
+		// 	get_options: function() {
+		// 		let budget_against = frappe.query_report.get_filter_value('budget_against');
+		// 		return budget_against;
+		// 	}
+		// },
 		{
 			fieldname:"budget_against_filter",
 			label: __('Dimension Filter'),
-			fieldtype: "Dynamic Link",
-			get_options: function() {
+			fieldtype: "MultiSelectList",
+			get_data: function(txt) {
+				if (!frappe.query_report.filters) return;
+
 				let budget_against = frappe.query_report.get_filter_value('budget_against');
-				return budget_against;
+				if (!budget_against) return;
+
+				return frappe.db.get_link_options(budget_against, txt);
 			}
 		},
 		{

@@ -224,11 +224,13 @@ def get_cost_centers(filters):
 def get_dimension_target_details(filters):
 	budget_against = frappe.scrub(filters.get("budget_against"))
 	cond = ""
-	if filters.budget_against_filter:
-		print("filters.budget_against_filter = ", filters.budget_against_filter)
-		cond += """ and b.{budget_against} = '{budget_against_filter}'""".format(
-			budget_against=budget_against,
-			budget_against_filter=filters.budget_against_filter)
+	if filters.get("budget_against_filter"):
+		print("TYF.budget_against_filter = ", filters.budget_against_filter)
+		cond += """ and b.{budget_against} in (%s)""".format(
+			budget_against=budget_against) % ", ".join(["%s"] * len(filters.get("budget_against_filter")))
+		# cond += """ and b.{budget_against} = '{budget_against_filter}'""".format(
+		# 	budget_against=budget_against,
+		# 	budget_against_filter=filters.budget_against_filter)
 	if filters.budget_against == "Project":
 		return frappe.db.sql(
 			"""
@@ -261,7 +263,7 @@ def get_dimension_target_details(filters):
 					filters.to_fiscal_year,
 					filters.company
 				]
-
+				+ (filters.get("budget_against_filter") or [])
 			), as_dict=True)
 	else:
 		return frappe.db.sql(
@@ -293,7 +295,7 @@ def get_dimension_target_details(filters):
 					filters.to_fiscal_year,
 					filters.company
 				]
-
+				+ (filters.get("budget_against_filter") or [])
 			), as_dict=True)
 
 

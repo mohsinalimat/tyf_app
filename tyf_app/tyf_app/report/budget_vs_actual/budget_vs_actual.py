@@ -16,10 +16,11 @@ from erpnext.controllers.trends import get_period_date_ranges, get_period_month_
 def execute(filters=None):
 	if not filters:
 		filters = {}
-	# dimensions = []
+	dimensions = []
 	columns = get_columns(filters)
+
 	if filters.get("budget_against_filter"):
-		dimensions = filters.get("budget_against_filter")
+		dimensions.append(filters.get("budget_against_filter"))
 	else:
 		dimensions = get_cost_centers(filters)
 
@@ -29,7 +30,6 @@ def execute(filters=None):
 	data = []
 	for dimension in dimensions:
 		dimension_items = cam_map.get(dimension)
-
 		if dimension_items:
 			data = get_final_data(dimension, dimension_items, filters, period_month_ranges, data, 0)
 		else:
@@ -39,7 +39,7 @@ def execute(filters=None):
 				AND parent NOT IN %(dimension)s
 				GROUP BY parent''',{'dimension':[dimension]})
 			if DCC_allocation:
-				filters['budget_against_filter'] = [DCC_allocation[0][0]]
+				filters['budget_against_filter'] = DCC_allocation[0][0]
 				ddc_cam_map = get_dimension_account_month_map(filters)
 				dimension_items = ddc_cam_map.get(DCC_allocation[0][0])
 				if dimension_items:
@@ -224,11 +224,13 @@ def get_cost_centers(filters):
 def get_dimension_target_details(filters):
 	budget_against = frappe.scrub(filters.get("budget_against"))
 	cond = ""
-	if filters.get("budget_against_filter"):
-		cond += """ and b.{budget_against} in (%s)""".format(
-			budget_against=budget_against) % ", ".join(["%s"] * len(filters.get("budget_against_filter")))
+	if filters.get("budget_against_filter"):		
+		cond += """and b.{budget_against} = '%s'""".format(
+			budget_against=budget_against) % filters.budget_against_filter
 
 	if filters.budget_against == "Project":
+		if filters.get("currency"):
+			cond += """and bl.account_currency = '%s' and bl.account_currency = ac.account_currency""" % filters.get("currency")
 		return frappe.db.sql(
 			"""
 				select
@@ -240,7 +242,8 @@ def get_dimension_target_details(filters):
 					b.fiscal_year
 				from
 					`tabBudget` b,
-					`tabBudget Line Child` bl
+					`tabBudget Line Child` bl,
+					`tabAccount` ac
 				where
 					b.project = bl.project_code
 					and bl.docstatus = 1
@@ -248,6 +251,7 @@ def get_dimension_target_details(filters):
 					and b.fiscal_year between %s and %s
 					and b.budget_against = 'Project'
 					and b.company = %s
+					and bl.account = ac.name
 					{cond}
 				order by
 					b.fiscal_year, INET_ATON(SUBSTRING_INDEX(CONCAT(bl.code,'.0.0.0'),'.',4))
@@ -260,9 +264,10 @@ def get_dimension_target_details(filters):
 					filters.to_fiscal_year,
 					filters.company
 				]
-				+ (filters.get("budget_against_filter") or [])
 			), as_dict=True)
 	else:
+		if filters.get("currency") and filters.get("budget_against_filter"):
+			cond += """ and ac.account_currency = '%s' and ba.account = ac.name""" % filters.get("currency")
 		return frappe.db.sql(
 			"""
 				select
@@ -273,7 +278,8 @@ def get_dimension_target_details(filters):
 					b.fiscal_year
 				from
 					`tabBudget` b,
-					`tabBudget Account` ba
+					`tabBudget Account` ba,
+					`tabAccount` ac
 				where
 					b.name = ba.parent
 					and b.docstatus = 1
@@ -291,8 +297,8 @@ def get_dimension_target_details(filters):
 					filters.from_fiscal_year,
 					filters.to_fiscal_year,
 					filters.company
+					
 				]
-				+ (filters.get("budget_against_filter") or [])
 			), as_dict=True)
 
 
@@ -390,6 +396,7 @@ def get_actual_details(name, filters):
 					and b.{budget_against} = gl.{budget_against}
 					and gl.fiscal_year between %s and %s
 					and b.{budget_against} = %s
+					and gl.account_currency = %s
 					and exists(
 						select
 							name
@@ -402,7 +409,7 @@ def get_actual_details(name, filters):
 						gl.name
 					order by gl.fiscal_year, INET_ATON(SUBSTRING_INDEX(CONCAT(bl.code,'.0.0.0'),'.',4))
 			""".format(tab=filters.budget_against, budget_against=budget_against),
-			(filters.from_fiscal_year, filters.to_fiscal_year, name), as_dict=1)
+			(filters.from_fiscal_year, filters.to_fiscal_year, name, filters.get("currency")), as_dict=1)
 
 		for d in ac_details:
 			cc_actual_details.setdefault(d.budget_line, []).append(d)

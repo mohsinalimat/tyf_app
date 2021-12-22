@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "format:EPD-{employee}-{YYYY}-{#####}",
+ "creation": "2021-12-18 20:28:35.394945",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "from_date",
+  "company",
+  "company_cost_center",
+  "column_break_4",
+  "emp_name",
+  "to_date",
+  "company_share",
+  "amended_from",
+  "ps_section",
+  "project_share"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only_depends_on": "eval:doc.employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "emp_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "company_share",
+   "fieldtype": "Percent",
+   "label": "Company Share (%)",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "ps_section",
+   "fieldtype": "Section Break",
+   "label": "Project Share"
+  },
+  {
+   "fieldname": "project_share",
+   "fieldtype": "Table",
+   "label": "Projects Shares",
+   "options": "Project Share",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Employee Payroll Details",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.cost_center",
+   "fieldname": "company_cost_center",
+   "fieldtype": "Link",
+   "label": "Company Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2021-12-19 20:55:21.687081",
+ "modified_by": "Administrator",
+ "module": "TYF App",
+ "name": "Employee Payroll Details",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,19 +1,9 @@
-frappe.ui.form.on('Material Request', {
-    
+frappe.ui.form.on("Purchase Order", {
     onload: function(frm) {
         frm.events.set_filters(frm);
 	},
 
     set_filters: (frm) => {
-        frm.set_query("project", function() {
-			return {
-				filters: [
-					['company', '=', frm.doc.company],
-                    ['status', 'not in', 'Completed, Cancelled']
-                ]
-			};
-        });
-
 		frm.fields_dict['items'].grid.get_field('budget_line_child').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
 			return {   
@@ -22,7 +12,7 @@ frappe.ui.form.on('Material Request', {
                     ['docstatus', '=', 1]
 				]
 			}
-		}
+		};
 
         frm.fields_dict['items'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
@@ -32,22 +22,7 @@ frappe.ui.form.on('Material Request', {
                     ['status', 'not in', 'Completed, Cancelled']
 				]
 			}
-		}    
-    },
-
-    project: (frm, cdt, cdn) => {
-        var item = frappe.get_doc(cdt, cdn);
-        if (!item.project){
-            frm.set_value("cost_center", undefined);
-        }
-
-        $.each(this.frm.doc["items"] || [],
-        function(i, other_item) {
-            other_item.cost_center = item.cost_center;
-            other_item.project = item.project;
-            refresh_field("cost_center", other_item.name, other_item.parentfield);
-            refresh_field("project", other_item.name, other_item.parentfield);
-        });
+		};
     },
 
     get_bl_account: (frm, cdt,cdn) => {
@@ -61,7 +36,7 @@ frappe.ui.form.on('Material Request', {
 
 });
 
-frappe.ui.form.on("Material Request Item", {
+frappe.ui.form.on("Purchase Order Item", {
     
     project: (frm, cdt, cdn) => {
         let row = locals[cdt][cdn];

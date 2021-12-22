@@ -22,12 +22,79 @@ class TYFPayrollEntry(PayrollEntry):
         salary_slips = self.get_sal_slip_list(ss_status=1, as_dict=True)
         if salary_slips:
             salary_components = frappe.db.sql("""
-				select ssd.salary_component, ssd.amount, ssd.parentfield, ss.payroll_cost_center, ss.employee, ss.budget_line
+				select ssd.salary_component, ssd.amount, ssd.parentfield, ss.payroll_cost_center, ss.employee, ss.start_date, ss.end_date
 				from `tabSalary Slip` ss, `tabSalary Detail` ssd
 				where ss.name = ssd.parent and ssd.parentfield = '%s' and ss.name in (%s)
 			""" % (component_type, ', '.join(['%s']*len(salary_slips))),
                 tuple([d.name for d in salary_slips]), as_dict=True)
-            return salary_components
+            if not self.is_shared_salary:
+                return salary_components
+            return self.set_salary_ammount(salary_components)
+
+    def set_salary_ammount(self, salary_slips):
+
+        """
+        This method by Eng.Ibraheem Morghim and its for
+        set salary ammount with project and budget line account dimention
+        """
+
+        salary_slips_with_project = []
+
+        for i in salary_slips:
+            projects = None
+            payroll_details = frappe.get_list(
+                "Employee Payroll Details",
+                filters = {
+                    "docstatus": 1,
+                    "employee": i["employee"],
+                    "from_date": ["<=", i["start_date"]],
+                    "to_date": [">=", i["end_date"]],
+                },
+                fields = [
+                    "name",
+                    "company_share",
+                    "company_cost_center"
+                ],
+            )
+            if payroll_details:
+                projects = frappe.get_list(
+                    "Project Share",
+                    filters = {
+                        "parent": payroll_details[0]["name"]
+                        },
+                    fields = [
+                        "project",
+                        "budget_line",
+                        "account",
+                        "cost_center",
+                        "share"
+                        ],
+                )
+            if projects:
+                amount = i["amount"]
+                if payroll_details[0]["company_share"] > 0:
+                    sal_slip = i.copy()
+                    sal_slip["amount"] = amount * (payroll_details[0]["company_share"] / 100)
+                    sal_slip["payroll_cost_center"] = payroll_details[0]["company_cost_center"]
+                    salary_slips_with_project.append(sal_slip)
+                    
+                for p in projects:
+                    sal_slip = i.copy()
+                    sal_slip["amount"] = amount * (p["share"] / 100)
+                    sal_slip["project"] = p["project"]
+                    sal_slip["budget_line"] = p["budget_line"]
+                    sal_slip["payroll_cost_center"] = p["cost_center"]
+                    salary_slips_with_project.append(sal_slip)
+            else:
+                frappe.throw(
+                    _("You have checked 'Is Shared Salary' and there is no 'Employee Payroll Details' for employee: {0}")
+                        .format(frappe.bold(i["employee"]))
+                    + "<br><br>" + _("Pleas make sure to create one and submet it first."),
+                    title=_("Error")
+                )
+                # salary_slips_with_project.append(i)
+
+        return salary_slips_with_project
 
     def get_salary_component_total(self, component_type=None):
         salary_components = self.get_salary_components(component_type)
@@ -37,12 +104,47 @@ class TYFPayrollEntry(PayrollEntry):
                 add_component_to_accrual_jv_entry = True
                 if component_type == "earnings":
                     is_flexible_benefit, only_tax_impact = frappe.db.get_value(
-                        "Salary Component", item['salary_component'], ['is_flexible_benefit', 'only_tax_impact'])
+                        "Salary Component",
+                        item['salary_component'],
+                        ['is_flexible_benefit', 'only_tax_impact'])
                     if is_flexible_benefit == 1 and only_tax_impact == 1:
                         add_component_to_accrual_jv_entry = False
                 if add_component_to_accrual_jv_entry:
-                    component_dict[(item.salary_component, item.payroll_cost_center, item.employee, item.budget_line)] \
-                        = component_dict.get((item.salary_component, item.payroll_cost_center, item.employee), 0) + flt(item.amount)
+                    if item.project:
+                        component_dict[
+                            (
+                                item.salary_component,
+                                item.payroll_cost_center,
+                                item.project,
+                                item.budget_line,
+                                item.employee
+                                
+                            )
+                        ] = component_dict.get(
+                            (
+                                item.salary_component,
+                                item.payroll_cost_center,
+                                item.project,
+                                item.budget_line,
+                                item.employee),
+                                0
+                            ) + flt(item.amount)
+                    else:
+                        component_dict[
+                            (
+                                item.salary_component,
+                                item.payroll_cost_center,
+                                item.employee
+                                
+                            )
+                        ] = component_dict.get(
+                            (
+                                item.salary_component,
+                                item.payroll_cost_center,
+                                item.employee),
+                                0
+                            ) + flt(item.amount)
+
             account_details = self.get_account(component_dict=component_dict)
             return account_details
 
@@ -50,8 +152,13 @@ class TYFPayrollEntry(PayrollEntry):
         account_dict = {}
         for key, amount in component_dict.items():
             account = self.get_salary_component_account(key[0])
-            account_dict[(account, key[1], key[2], key[3])] = account_dict.get(
-                (account, key[1], key[2], key[3]), 0) + amount
+            i = 1
+            key_dict = [account]
+            while i < len(key):
+                key_dict.append(key[i])
+                i += 1
+            account_dict[tuple(key_dict)] = account_dict.get(
+                tuple(key_dict), 0) + amount
         return account_dict
 
     def make_accrual_jv_entry(self):
@@ -79,7 +186,6 @@ class TYFPayrollEntry(PayrollEntry):
             payable_amount = 0
             multi_currency = 0
             company_currency = erpnext.get_company_currency(self.company)
-            employee = ""
 
             # Earnings
             for acc_cc, amount in earnings.items():
@@ -89,26 +195,45 @@ class TYFPayrollEntry(PayrollEntry):
                 account_type = frappe.db.get_value(
                     "Account", acc_cc[0], "account_type")
                 if account_type in ["Receivable", "Payable"]:
-                    row = {
-                        "account": acc_cc[0],
-                        "debit_in_account_currency": flt(amt, precision),
-                        "exchange_rate": flt(exchange_rate),
-                        "cost_center": acc_cc[1] or self.cost_center,
-                        "project": self.project,
-                        "party_type": "Employee",
-                        "party": acc_cc[2]
-                    }
-                    employee = acc_cc[2]
+                    if self.is_shared_salary and len(acc_cc) > 3:
+                        row = {
+                            "account": acc_cc[0],
+                            "debit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": acc_cc[2],
+                            "budget_line_child": str(acc_cc[3]),
+                            "party_type": "Employee",
+                            "party": acc_cc[4]
+                        }
+                    else:
+                        row = {
+                            "account": acc_cc[0],
+                            "debit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": self.project,
+                            "party_type": "Employee",
+                            "party": acc_cc[2]
+                        }
                 else:
-                    row = {
-                        "account": acc_cc[0],
-                        "debit_in_account_currency": flt(amt, precision),
-                        "exchange_rate": flt(exchange_rate),
-                        "cost_center": acc_cc[1] or self.cost_center,
-                        "project": self.project,
-                        "budget_line_child": acc_cc[3]
-                    }
-
+                    if self.is_shared_salary and len(acc_cc) > 3:
+                        row = {
+                            "account": acc_cc[0],
+                            "debit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": acc_cc[2],
+                            "budget_line_child": acc_cc[3]
+                        }
+                    else:
+                        row = {
+                                "account": acc_cc[0],
+                                "debit_in_account_currency": flt(amt, precision),
+                                "exchange_rate": flt(exchange_rate),
+                                "cost_center": acc_cc[1] or self.cost_center,
+                                "project": self.project
+                            }
                 accounts.append(self.update_accounting_dimensions(
                     row, accounting_dimensions))
 
@@ -120,54 +245,59 @@ class TYFPayrollEntry(PayrollEntry):
                 account_type = frappe.db.get_value(
                     "Account", acc_cc[0], "account_type")
                 if account_type in ["Receivable", "Payable"]:
-                    row = {
-                        "account": acc_cc[0],
-                        "credit_in_account_currency": flt(amt, precision),
-                        "exchange_rate": flt(exchange_rate),
-                        "cost_center": acc_cc[1] or self.cost_center,
-                        "project": self.project,
-                        "party_type": "Employee",
-                        "party": acc_cc[2]
-                    }
-                    employee = acc_cc[2]
+                    if self.is_shared_salary and len(acc_cc) > 3:
+                        row = {
+                            "account": acc_cc[0],
+                            "credit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": acc_cc[2],
+                            "budget_line_child": acc_cc[3],
+                            "party_type": "Employee",
+                            "party": acc_cc[4]
+                        }
+                    else:
+                        row = {
+                            "account": acc_cc[0],
+                            "credit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": self.project,
+                            "party_type": "Employee",
+                            "party": acc_cc[2]
+                        }
                 else:
-                    row = {
-                        "account": acc_cc[0],
-                        "credit_in_account_currency": flt(amt, precision),
-                        "exchange_rate": flt(exchange_rate),
-                        "cost_center": acc_cc[1] or self.cost_center,
-                        "project": self.project
-                    }
-
+                    if self.is_shared_salary and len(acc_cc) > 3:
+                        row = {
+                            "account": acc_cc[0],
+                            "credit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": acc_cc[2],
+                            "budget_line_child": str(acc_cc[3])
+                        }
+                    else:
+                        row = {
+                            "account": acc_cc[0],
+                            "credit_in_account_currency": flt(amt, precision),
+                            "exchange_rate": flt(exchange_rate),
+                            "cost_center": acc_cc[1] or self.cost_center,
+                            "project": self.project
+                        }
                 accounts.append(self.update_accounting_dimensions(
                     row, accounting_dimensions))
 
             # Payable amount
             exchange_rate, payable_amt = self.get_amount_and_exchange_rate_for_journal_entry(
                 payroll_payable_account, payable_amount, company_currency, currencies)
-            account_type = frappe.db.get_value(
-                "Account", payroll_payable_account, "account_type")
-            if account_type in ["Receivable", "Payable"]:
-                row = {
-                    "account": payroll_payable_account,
-                    "credit_in_account_currency": flt(payable_amt, precision),
-                    "exchange_rate": flt(exchange_rate),
-                    "cost_center": self.cost_center,
-                    "party_type": "Employee",
-                    "party": employee
-                }
-                employee = ""
-            else:
-                row = {
-                    "account": payroll_payable_account,
-                    "credit_in_account_currency": flt(payable_amt, precision),
-                    "exchange_rate": flt(exchange_rate),
-                    "cost_center": self.cost_center
-                }
-
+            row = {
+                "account": payroll_payable_account,
+                "credit_in_account_currency": flt(payable_amt, precision),
+                "exchange_rate": flt(exchange_rate),
+                "cost_center": self.cost_center
+            }
             accounts.append(self.update_accounting_dimensions(
                 row, accounting_dimensions))
-
             journal_entry.set("accounts", accounts)
             if len(currencies) > 1:
                 multi_currency = 1
@@ -203,7 +333,7 @@ class TYFPayrollEntry(PayrollEntry):
                 party = salary_slip.employee
                 for sal_detail in salary_slip.earnings:
                     is_flexible_benefit, only_tax_impact, creat_separate_je, statistical_component = frappe.db.get_value("Salary Component", sal_detail.salary_component,
-                                                                                                                         ['is_flexible_benefit', 'only_tax_impact', 'create_separate_payment_entry_against_benefit_claim', 'statistical_component'])
+                        ['is_flexible_benefit', 'only_tax_impact', 'create_separate_payment_entry_against_benefit_claim', 'statistical_component'])
                     if only_tax_impact != 1 and statistical_component != 1:
                         if is_flexible_benefit == 1 and creat_separate_je == 1:
                             self.create_journal_entry(
@@ -291,14 +421,21 @@ class TYFPayrollEntry(PayrollEntry):
         journal_entry.save(ignore_permissions=True)
 
 
-    def make_filters(self):
-        filters = frappe._dict()
-        filters['company'] = self.company
-        filters['branch'] = self.branch
-        filters['department'] = self.department
-        filters['designation'] = self.designation
-        filters['project'] = self.project
-        return filters
+    def update_accounting_dimensions(self, row, accounting_dimensions):
+        for dimension in accounting_dimensions:
+           if self.get(dimension):
+                row.update({dimension: self.get(dimension)})
+        return row
+
+
+    # def make_filters(self):
+    #     filters = frappe._dict()
+    #     filters['company'] = self.company
+    #     filters['branch'] = self.branch
+    #     filters['department'] = self.department
+    #     filters['designation'] = self.designation
+    #     filters['project'] = self.project
+    #     return filters
 
 # class TYFJournalEntry(JournalEntry):
 #     def make_gl_entries(self, cancel=0, adv_adj=0):
@@ -427,13 +564,13 @@ class TYFPayrollEntry(PayrollEntry):
 #     ) 
 
 
-def get_filter_condition(filters):
-    cond = ''
-    for f in ['company', 'branch', 'department', 'designation', 'project']:
-        if filters.get(f):
-            cond += " and t1." + f + " = " + frappe.db.escape(filters.get(f))
+# def get_filter_condition(filters):
+#     cond = ''
+#     for f in ['company', 'branch', 'department', 'designation', 'project']:
+#         if filters.get(f):
+#             cond += " and t1." + f + " = " + frappe.db.escape(filters.get(f))
 
-    return cond
+#     return cond
 
 # def get_gl_dict(self, args, account_currency=None, item=None):
 #     """this method populates the common properties of a gl entry record"""

@@ -18,20 +18,6 @@ frappe.ui.form.on('Budget Line', {
 		}
 	},
 
-	// before_save: (frm) => {
-	// 	if(frm.doc.amended_from){
-	// 		frm.set_value("amended_from", undefined);
-	// 	}
-	// },
-	validate: (frm) => {
-		if (frm.doc.amended_from){
-			frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.delete_amended_from_doc', {
-				'doc_name': frm.doc.amended_from
-			  }).then(r => {
-				frm.set_value("amended_from", undefined);
-			  });
-		}
-	},
 	onload: (frm) => {
 		frm.events.toggle_fields_based_on_currency(frm);
 		if(frm.doc.project_code && frm.doc.__islocal){
@@ -146,38 +132,6 @@ frappe.ui.form.on('Budget Line', {
 
 		var grid = frm.get_field("bl_child").grid;
 		if(grid) grid.set_column_disp(fields, frm.doc.multi_currency);
-		// var fields = {
-		// 	"currency_section": "1",
-		// 	"account_currency": "1",
-		// 	"exchange_rate": "1"
-		// };//, "unit_cost", "total_cost"
-
-		// var grid = frm.get_field("bl_child").grid;
-		// console.log(grid);
-		// if(grid){
-		// 	$.each(fields, function (fieldname, hidden) {
-		// 		frm.fields_dict.bl_child.grid.update_docfield_property(
-		// 			fieldname,
-		// 			'hidden',
-		// 			frm.doc.multi_currency ? 0 : hidden
-		// 		);
-		// 	})
-		// } //grid.set_column_disp(fields, frm.doc.multi_currency);
-		// frm.refresh_field("bl_child");
-
-		// dynamic label
-		// var field_label_map = {
-		// 	"unit_cost": "Unit Cost",
-		// 	"total_cost": "Total Cost"
-		// };
-
-		// $.each(field_label_map, function (fieldname, label) {
-		// 	frm.fields_dict.bl_child.grid.update_docfield_property(
-		// 		fieldname,
-		// 		'label',
-		// 		frm.doc.multi_currency ? (label + " in Account Currency") : label
-		// 	);
-		// })
 	},
 	get_company_currency: (frm, cdt, cdn) => {
 		if (frm.doc.company){
@@ -191,20 +145,6 @@ frappe.ui.form.on('Budget Line', {
 			frappe.model.set_value(cdt, cdn, "account_currency", undefined);
 			refresh_field('bl_child');
 		}
-		
-		// frappe.db.get_value('Project', {'name': frm.doc.project_code}, 'company', (r) => {
-		// 	if (r && r.company) {
-		// 		frappe.db.get_value('Company', {'name': r.company}, 'default_currency', (r) => {
-		// 			if (r && r.default_currency) {
-		// 				frappe.model.set_value(cdt, cdn, "account_currency", r.default_currency);
-		// 				refresh_field('bl_child');
-		// 			}
-		// 		});
-		// 	} else {
-		// 		frappe.model.set_value(cdt, cdn, "account_currency", undefined);
-		// 		refresh_field('bl_child');
-		// 	}
-		// });
 	},
 
 	get_account_currency: (frm, cdt, cdn) => {
@@ -270,7 +210,6 @@ frappe.ui.form.on("Budget Line Child", {
 	account: (frm, cdt,cdn) => {
 		let row = locals[cdt][cdn];
 		if(row.account){
-			// console.log("account currency = " + frm.events.get_account_currency(row.account))
 			frm.events.get_account_currency(frm, cdt, cdn);
 		} else {
 			frm.events.get_company_currency(frm, cdt, cdn);
@@ -302,26 +241,3 @@ frappe.ui.form.on("Budget Line Child", {
 	},
   
 });
-
-// $.extend(tyf_app.budget_line, {
-// 	toggle_fields_based_on_currency: function(frm) {
-// 		var fields = ["currency_section", "account_currency", "exchange_rate", "debit", "credit"];
-
-// 		var grid = frm.get_field("accounts").grid;
-// 		if(grid) grid.set_column_disp(fields, frm.doc.multi_currency);
-
-// 		// dynamic label
-// 		var field_label_map = {
-// 			"debit_in_account_currency": "Debit",
-// 			"credit_in_account_currency": "Credit"
-// 		};
-
-// 		$.each(field_label_map, function (fieldname, label) {
-// 			frm.fields_dict.accounts.grid.update_docfield_property(
-// 				fieldname,
-// 				'label',
-// 				frm.doc.multi_currency ? (label + " in Account Currency") : label
-// 			);
-// 		})
-// 	},
-// });

@@ -2,18 +2,54 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.utils import fmt_money
 from frappe import _ 
 from frappe.model.document import Document
 from frappe.model.naming import _get_amended_name,  set_naming_from_document_naming_rule, make_autoname, set_name_from_naming_options, validate_name
-
+import collections, functools, operator
 
 class BudgetLine(Document):
-	# def validate(self):
-	# 	print("=== validate ===")
+	def validate(self):
+		self.delete_amended_from_doc()
+
+	def validate_multi_currency(self):
+		currencies = []
+		if self.bl_child:
+			for child in self.bl_child:
+				currencies.append(child.account_currency)
+			if not self.multi_currency and len(currencies) > 1:
+				frappe.thorw(_("If you want to use muliable currencies for budget lines make sure you check 'Multi Currency' our if you are using the data importer set its value to '1' in the imported file."))
+
+
+	def delete_amended_from_doc(self):	
+		if self.amended_from:
+			frappe.delete_doc("Budget Line", self.amended_from)
+			self.amended_from = None
+
+	def on_submit(self):
+		if self.total_cost and self.project_code:
+			project = frappe.get_doc("Project", self.project_code)
+			project.estimated_costing += self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))
+			project.save()
+
+	def on_cancel(self):
+		if self.total_cost and self.project_code:
+			project = frappe.get_doc("Project", self.project_code)
+			project.estimated_costing -= self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))
+			project.save()
+	
+	def before_update_after_submit(self):
+		total_cost = frappe.db.get_value("Budget Line", {"name": self.name},
+					"total_cost")
+		project = frappe.get_doc("Project", self.project_code)
+		if self.total_cost > total_cost:
+			project.estimated_costing += self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))	
+		else:
+			project.estimated_costing -= self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))
+		project.save()
 
 	def set_new_name(self, force=False, set_name=None, set_child_names=True):
 		"""Calls `frappe.naming.set_new_name` for parent and child docs."""
-		# print("ITS TYF set_new_name")
 		if self.flags.name_set and not force:
 			return
 
@@ -37,7 +73,6 @@ class BudgetLine(Document):
 
 
 def custom_set_new_name(doc):
-    # print("ITS TYF custom_set_new_name")
     """
     Sets the `name` property for the document based on various rules.
 
@@ -152,8 +187,9 @@ def get_budget_line_chiled(project_code):
 
 
 @frappe.whitelist()
-def get_budget_line(project_code, show_draft, show_cancelled):
+def get_budget_line(project_code, company, show_draft, show_cancelled):
 	data = []
+	company_currency = frappe.db.get_value('Company',  company,  'default_currency', cache=True)
 	parents = frappe.get_all(
 		'Budget Line',
 		filters={'project_code': project_code, 'docstatus': ['in', ['1', show_draft, show_cancelled]]},
@@ -162,6 +198,7 @@ def get_budget_line(project_code, show_draft, show_cancelled):
 			'docstatus',
 			'description',
 			'name',
+			'company',
 			'total_cost'
 			], order_by='code')
 	for parent in parents:
@@ -171,7 +208,7 @@ def get_budget_line(project_code, show_draft, show_cancelled):
 			"code": parent.code,
 			"status": parent.docstatus,
 			"description": parent.description,
-			"total_cost": frappe.format(parent.total_cost, 'Currency')
+			"total_cost": fmt_money(parent.total_cost, currency=company_currency) #frappe.format(parent.total_cost, 'Currency')
 			})
 		children = frappe.get_all(
 			'Budget Line Child',
@@ -187,6 +224,7 @@ def get_budget_line(project_code, show_draft, show_cancelled):
 					'unit_cost',
 					'duration',
 					'charge',
+					'account_currency',
 					'total_cost'
 					], order_by='idx')
 		for child in children:
@@ -203,7 +241,8 @@ def get_budget_line(project_code, show_draft, show_cancelled):
 				"unit_cost": frappe.format(child.unit_cost, 'Currency'),
 				"duration":child.duration,
 				"charge": frappe.format(child.charge, 'Percent'),
-				"total_cost": frappe.format(child.total_cost, 'Currency')
+				"currency": child.account_currency,
+				"total_cost": fmt_money(child.total_cost, currency=child.account_currency)
 				})
 	return data
 
@@ -211,8 +250,9 @@ def get_budget_line(project_code, show_draft, show_cancelled):
 @frappe.whitelist()
 def get_footer(project_code, percent):
 	data = []
-	d_total = 0
-	s_total = 0
+	d = []
+	s = []
+	p = []
 	p_total = 0
 	parents = frappe.get_all(
 		'Budget Line',
@@ -230,46 +270,72 @@ def get_footer(project_code, percent):
 				'parent': parent.name},
 				fields=[
 					'd_or_s',
+					'account_currency',
 					'total_cost'
 					], order_by='idx')
 		for child in children:
 			if child.d_or_s == "D":
-				d_total = d_total + child.total_cost
+				d.append({
+								child.account_currency: child.total_cost
+							})
 			else:
-				s_total = s_total + child.total_cost
-
-	data.append(
-			{
-			"tbody_id": "t_footer",
-			"type": "Direct",
-			"value": frappe.format(d_total, 'Currency')
-			})
-	data.append(
-			{
-			"tbody_id": "t_footer",
-			"type": "Support",
-			"value": frappe.format(s_total, 'Currency')	
-			})
+				s.append({
+								child.account_currency: child.total_cost
+							})
+	d = dict(functools.reduce(operator.add,
+         map(collections.Counter, d)))
+	s = dict(functools.reduce(operator.add,
+         map(collections.Counter, s)))
+	for currency, total in d.items():
+		p.append({
+			currency: total
+		})
+		data.append(
+				{
+				"tbody_id": "t_footer",
+				"type": "Direct (" + currency+")",
+				"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
+				})
+	for currency, total in s.items():
+		p.append({
+			currency: total
+		})
+		data.append(
+				{
+				"tbody_id": "t_footer",
+				"type": "Support (" + currency +")",
+				"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
+				})
+	p = dict(functools.reduce(operator.add,
+         map(collections.Counter, p)))
 	data.append(
 			{
 			"tbody_id": "t_footer_psd",
 			"type": "PSC Cost Percent",
 			"value": frappe.format(percent, 'Percent')	
 			})
+	
+	for currency, total in p.items():
+		psc_ammount = total * (float(percent) / 100)
+		data.append(
+				{
+				"tbody_id": "t_footer_psd",
+				"type": "PSC Amount (" + currency + ")",
+				"value": fmt_money(psc_ammount, currency=currency) #frappe.format(psc_ammount, 'Currency')	
+				})
+	
+		data.append(
+				{
+				"tbody_id": "t_footer_psd",
+				"type": "Total Cost(" + currency + ")",
+				"value": fmt_money(psc_ammount + total, currency=currency) #frappe.format(psc_ammount + p_total, 'Currency'),
+				})
 	psc_ammount = p_total * (float(percent) / 100)
 	data.append(
-			{
-			"tbody_id": "t_footer_psd",
-			"type": "PSC Amount",
-			"value": frappe.format(psc_ammount, 'Currency')	
-			})
-	data.append(
-			{
-			"tbody_id": "t_footer_psd",
-			"type": "Total Cost",
-			"value": frappe.format(psc_ammount + p_total, 'Currency'),
-			"estimated_costing": psc_ammount + p_total
-			})
+				{
+				"type": "Estimated Costing",
+				"value": psc_ammount + p_total
+				})
 	return data
 
 @frappe.whitelist()
@@ -297,9 +363,8 @@ def get_amended_doc_code(doc_name):
 	)
 	return amended
 
-@frappe.whitelist()
-def delete_amended_from_doc(doc_name):
-	frappe.delete_doc("Budget Line", doc_name)
+
+
 
 @frappe.whitelist()
 def get_bl_account(bl_name):

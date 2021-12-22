@@ -1,16 +1,4 @@
 frappe.ui.form.on("Payroll Entry", {
-    refresh: function (frm) {
-        frm.fields_dict['employees'].grid.get_field('budget_line').get_query = function(doc, cdt, cdn) {
-			var child = locals[cdt][cdn];
-			return {    
-				filters:[
-					['project_code', '=', frm.doc.project],
-                    ['docstatus', '=', 1]
-				]
-			}
-		}
-    },
-
     project: (frm) => {
         if (!frm.doc.project){
             if (frm.doc.company){

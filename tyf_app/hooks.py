@@ -37,9 +37,10 @@ app_include_css = "/assets/tyf_app/css/tyf_app.css"
 doctype_js = {
 	"Project" : "public/js/project.js",
 	"Payroll Entry" : "public/js/payroll_entry.js",
-	"Employee" : "public/js/employee.js",
 	"Journal Entry" : "public/js/journal_entry.js",
-	"Material Request" : "public/js/material_request.js"
+	"Material Request" : "public/js/material_request.js",
+	"Purchase Order" : "public/js/purchase_order.js",
+	"Purchase Invoice": "public/js/purchase_invoice.js"
 	}
 # doctype_js = {"Payroll Entry" : "public/js/payroll_entry.js"}
 # doctype_js = {"Employee" : "public/js/employee.js"}
@@ -164,12 +165,12 @@ doc_events = {
 # erpnext.payroll.doctype.payroll_entry.payroll_entry.get_filter_condition = tyf_app.overrides.get_filter_condition
 
 
-import erpnext.payroll.doctype.payroll_entry.payroll_entry as _erpnext_payroll_entry
+# import erpnext.payroll.doctype.payroll_entry.payroll_entry as _erpnext_payroll_entry
 # from erpnext.controllers.accounts_controller import AccountsController as _erpnext_controller
 # from frappe.model.document import Document as frappe_document
-import tyf_app.overrides as _tyf_app_overrides
+# import tyf_app.overrides as _tyf_app_overrides
 
-_erpnext_payroll_entry.get_filter_condition = _tyf_app_overrides.get_filter_condition
+# _erpnext_payroll_entry.get_filter_condition = _tyf_app_overrides.get_filter_condition
 # _erpnext_controller.get_gl_dict = _tyf_app_overrides.get_gl_dict
 # frappe_document.set_new_name = tyf_app_overrides.set_new_name
 

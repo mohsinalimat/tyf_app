@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from __future__ import division
 import frappe
 from frappe import _
-from frappe import msgprint
 
 def validate_jv(doc, method=None):
     bl_data = []
@@ -21,5 +20,4 @@ def validate_jv(doc, method=None):
                 bl['idx'], frappe.bold(bl['bl_name']))
             msg += "<br><br>"
             
-
         frappe.throw(msg, title=_("Budget Lines Error"))

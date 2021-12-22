@@ -123,17 +123,18 @@ frappe.ui.form.on("Project", {
   add_row_footer:(frm, data) => {
     
     for(let i=0 ; i < data.length ; i++){
-      var table = document.getElementById(data[i].tbody_id)
-      var rowCount = table.rows.length;
-      var row = table.insertRow(rowCount);
-      var type_cell = row.insertCell(0);
-      var total_cell = row.insertCell(1);
-      type_cell.colSpan = "8";
-      type_cell.innerHTML = data[i].type;
-      total_cell.colSpan = "2";
-      total_cell.innerHTML = data[i].value;
-      if(data[i].type == "Total Cost"){
-        frm.set_value("estimated_costing", data[i].estimated_costing);
+      if(data[i].type == "Estimated Costing"){
+        frm.set_value("estimated_costing", data[i].value);
+      } else {
+        var table = document.getElementById(data[i].tbody_id)
+        var rowCount = table.rows.length;
+        var row = table.insertRow(rowCount);
+        var type_cell = row.insertCell(0);
+        var total_cell = row.insertCell(1);
+        type_cell.colSpan = "8";
+        type_cell.innerHTML = data[i].type;
+        total_cell.colSpan = "2";
+        total_cell.innerHTML = data[i].value;
       }
     }
   },
@@ -141,6 +142,7 @@ frappe.ui.form.on("Project", {
   get_budget_line:(frm) => {
     frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_budget_line', {
       'project_code': frm.doc.name,
+      'company': frm.doc.company,
       'show_draft': frm.doc.show_draft_budget_lines ? "0" : "1",
       'show_cancelled': frm.doc.show_cancelled_budget_lines ? "2" : "1"
     }).then(r => {

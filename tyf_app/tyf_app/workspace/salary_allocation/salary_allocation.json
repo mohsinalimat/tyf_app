@@ -1,0 +1,53 @@
+{
+ "category": "Modules",
+ "charts": [],
+ "creation": "2021-12-18 20:51:00.832222",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "extends": "Payroll",
+ "extends_another_page": 1,
+ "hide_custom": 0,
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "label": "Salary Allocation",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Salary Allocation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Payroll Details",
+   "link_to": "Employee Payroll Details",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  }
+ ],
+ "modified": "2021-12-18 20:54:28.920773",
+ "modified_by": "Administrator",
+ "module": "TYF App",
+ "name": "Salary Allocation",
+ "onboarding": "Payroll",
+ "owner": "Administrator",
+ "pin_to_bottom": 0,
+ "pin_to_top": 0,
+ "restrict_to_domain": "Non Profit",
+ "shortcuts": [
+  {
+   "doc_view": "List",
+   "label": "Employee Payroll Details",
+   "link_to": "Employee Payroll Details",
+   "restrict_to_domain": "Non Profit",
+   "type": "DocType"
+  }
+ ]
+}

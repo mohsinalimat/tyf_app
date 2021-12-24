@@ -11,12 +11,14 @@ import collections, functools, operator
 class BudgetLine(Document):
 	def validate(self):
 		self.delete_amended_from_doc()
+		self.validate_multi_currency()
 
 	def validate_multi_currency(self):
 		currencies = []
 		if self.bl_child:
 			for child in self.bl_child:
-				currencies.append(child.account_currency)
+				if child.account_currency not in currencies:
+					currencies.append(child.account_currency)
 			if not self.multi_currency and len(currencies) > 1:
 				frappe.thorw(_("If you want to use muliable currencies for budget lines make sure you check 'Multi Currency' our if you are using the data importer set its value to '1' in the imported file."))
 
@@ -42,11 +44,16 @@ class BudgetLine(Document):
 		total_cost = frappe.db.get_value("Budget Line", {"name": self.name},
 					"total_cost")
 		project = frappe.get_doc("Project", self.project_code)
+		new_total_cost = 0
 		if self.total_cost > total_cost:
-			project.estimated_costing += self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))	
-		else:
-			project.estimated_costing -= self.total_cost + (self.total_cost * (float(project.psc_cost_percent) / 100))
-		project.save()
+			new_total_cost = self.total_cost - total_cost
+			project.estimated_costing += new_total_cost + (new_total_cost * (float(project.psc_cost_percent) / 100))
+			project.save()
+		elif self.total_cost < total_cost:
+			new_total_cost = total_cost - self.total_cost
+			project.estimated_costing -= new_total_cost + (new_total_cost * (float(project.psc_cost_percent) / 100))
+			project.save()
+		
 
 	def set_new_name(self, force=False, set_name=None, set_child_names=True):
 		"""Calls `frappe.naming.set_new_name` for parent and child docs."""
@@ -261,82 +268,114 @@ def get_footer(project_code, percent):
 			'name',
 			'total_cost'
 			], order_by='code')
-	for parent in parents:
-		p_total = p_total + parent.total_cost
-		children = frappe.get_all(
-			'Budget Line Child',
-			filters={
-				'parenttype': 'Budget Line',
-				'parent': parent.name},
-				fields=[
-					'd_or_s',
-					'account_currency',
-					'total_cost'
-					], order_by='idx')
-		for child in children:
-			if child.d_or_s == "D":
-				d.append({
-								child.account_currency: child.total_cost
-							})
-			else:
-				s.append({
-								child.account_currency: child.total_cost
-							})
-	d = dict(functools.reduce(operator.add,
-         map(collections.Counter, d)))
-	s = dict(functools.reduce(operator.add,
-         map(collections.Counter, s)))
-	for currency, total in d.items():
-		p.append({
-			currency: total
-		})
-		data.append(
-				{
-				"tbody_id": "t_footer",
-				"type": "Direct (" + currency+")",
-				"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
-				})
-	for currency, total in s.items():
-		p.append({
-			currency: total
-		})
-		data.append(
-				{
-				"tbody_id": "t_footer",
-				"type": "Support (" + currency +")",
-				"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
-				})
-	p = dict(functools.reduce(operator.add,
-         map(collections.Counter, p)))
-	data.append(
-			{
-			"tbody_id": "t_footer_psd",
-			"type": "PSC Cost Percent",
-			"value": frappe.format(percent, 'Percent')	
+	if parents:
+		for parent in parents:
+			p_total = p_total + parent.total_cost
+			children = frappe.get_all(
+				'Budget Line Child',
+				filters={
+					'parenttype': 'Budget Line',
+					'parent': parent.name},
+					fields=[
+						'd_or_s',
+						'account_currency',
+						'total_cost'
+						], order_by='idx')
+			for child in children:
+				if child.d_or_s == "D":
+					d.append({
+									child.account_currency: child.total_cost
+								})
+				else:
+					s.append({
+									child.account_currency: child.total_cost
+								})
+		d = dict(functools.reduce(operator.add,
+			map(collections.Counter, d)))
+		s = dict(functools.reduce(operator.add,
+			map(collections.Counter, s)))
+		for currency, total in d.items():
+			p.append({
+				currency: total
 			})
-	
-	for currency, total in p.items():
-		psc_ammount = total * (float(percent) / 100)
+			data.append(
+					{
+					"tbody_id": "t_footer",
+					"type": "Direct (" + currency+")",
+					"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
+					})
+		for currency, total in s.items():
+			p.append({
+				currency: total
+			})
+			data.append(
+					{
+					"tbody_id": "t_footer",
+					"type": "Support (" + currency +")",
+					"value": fmt_money(total, currency=currency) #frappe.format(i['total_cost'], 'Currency')
+					})
+		p = dict(functools.reduce(operator.add,
+			map(collections.Counter, p)))
 		data.append(
 				{
 				"tbody_id": "t_footer_psd",
-				"type": "PSC Amount (" + currency + ")",
-				"value": fmt_money(psc_ammount, currency=currency) #frappe.format(psc_ammount, 'Currency')	
+				"type": "PSC Cost Percent",
+				"value": frappe.format(percent, 'Percent')	
 				})
-	
+		
+		for currency, total in p.items():
+			psc_ammount = total * (float(percent) / 100)
+			data.append(
+					{
+					"tbody_id": "t_footer_psd",
+					"type": "PSC Amount (" + currency + ")",
+					"value": fmt_money(psc_ammount, currency=currency) #frappe.format(psc_ammount, 'Currency')	
+					})
+		
+			data.append(
+					{
+					"tbody_id": "t_footer_psd",
+					"type": "Total Cost(" + currency + ")",
+					"value": fmt_money(psc_ammount + total, currency=currency) #frappe.format(psc_ammount + p_total, 'Currency'),
+					})
+		psc_ammount = p_total * (float(percent) / 100)
 		data.append(
-				{
-				"tbody_id": "t_footer_psd",
-				"type": "Total Cost(" + currency + ")",
-				"value": fmt_money(psc_ammount + total, currency=currency) #frappe.format(psc_ammount + p_total, 'Currency'),
-				})
-	psc_ammount = p_total * (float(percent) / 100)
-	data.append(
-				{
-				"type": "Estimated Costing",
-				"value": psc_ammount + p_total
-				})
+					{
+					"type": "Estimated Costing",
+					"value": psc_ammount + p_total
+					})
+	else:
+		data.extend(({
+					"tbody_id": "t_footer",
+					"type": "Direct",
+					"value": fmt_money(0, currency="USD") #frappe.format(i['total_cost'], 'Currency')
+					},
+					{			
+					"tbody_id": "t_footer",
+					"type": "Support",
+					"value": fmt_money(0, currency="USD") #frappe.format(i['total_cost'], 'Currency')
+					},
+					{			
+					"tbody_id": "t_footer_psd",
+					"type": "PSC Cost Percent",
+					"value": frappe.format(percent, 'Percent')	
+					},
+					{
+					"tbody_id": "t_footer_psd",
+					"type": "PSC Amount",
+					"value": fmt_money(0, currency="USD") #frappe.format(psc_ammount, 'Currency')	
+					},
+					{
+					"tbody_id": "t_footer_psd",
+					"type": "Total Cost",
+					"value": fmt_money(0, currency="USD") #frappe.format(psc_ammount + p_total, 'Currency'),
+					},
+					{
+					"type": "Estimated Costing",
+					"value": 0
+					}))
 	return data
+
 
 @frappe.whitelist()
 def get_latest_parent_code(project_code):
@@ -353,6 +392,7 @@ def get_latest_parent_code(project_code):
 			if max < parents[i].code:
 				max = parents[i].code
 	return int(max) + 1
+
 
 @frappe.whitelist()
 def get_amended_doc_code(doc_name):

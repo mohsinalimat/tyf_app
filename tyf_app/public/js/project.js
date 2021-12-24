@@ -124,6 +124,7 @@ frappe.ui.form.on("Project", {
     
     for(let i=0 ; i < data.length ; i++){
       if(data[i].type == "Estimated Costing"){
+        console.log("old EC = " + frm.doc.estimated_costing);
         frm.set_value("estimated_costing", data[i].value);
       } else {
         var table = document.getElementById(data[i].tbody_id)

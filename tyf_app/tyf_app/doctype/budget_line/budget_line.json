@@ -34,6 +34,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Code",
+   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -58,7 +59,8 @@
    "label": "Total Cost",
    "options": "Company:company:default_currency",
    "precision": "2",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "depends_on": "eval:doc.code != undefined",
@@ -72,7 +74,8 @@
    "fieldname": "bl_child",
    "fieldtype": "Table",
    "label": "Budget Line Children",
-   "options": "Budget Line Child"
+   "options": "Budget Line Child",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -113,13 +116,14 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-19 20:14:31.959314",
+ "modified": "2021-12-24 23:36:20.029968",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Line",

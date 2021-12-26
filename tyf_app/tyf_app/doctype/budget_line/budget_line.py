@@ -384,14 +384,15 @@ def get_latest_parent_code(project_code):
 		'Budget Line',
 		filters={'project_code': project_code, 'docstatus': ['<', 2]},
 		fields=[
-			'code'
+			'code',
+			'custom_code'
 			], order_by='code')
 	if parents:
-		max = parents[0].code
 		for i in range(len(parents)):
-			if max < parents[i].code:
-				max = parents[i].code
-	return int(max) + 1
+			if not parents[i].custom_code:
+				if max < int(parents[i].code):
+					max = int(parents[i].code)
+	return max + 1
 
 
 @frappe.whitelist()

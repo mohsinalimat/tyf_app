@@ -338,8 +338,8 @@ def get_actual_details(name, filters):
 			"""
 				select
 					gl.account,
-					gl.debit,
-					gl.credit,
+					gl.debit_in_account_currency,
+					gl.credit_in_account_currency,
 					gl.fiscal_year,
 					MONTHNAME(gl.posting_date) as month_name,
 					b.{budget_against} as budget_against
@@ -377,8 +377,8 @@ def get_actual_details(name, filters):
 			"""
 				select
 					gl.account,
-					gl.debit,
-					gl.credit,
+					gl.debit_in_account_currency,
+					gl.credit_in_account_currency,
 					gl.fiscal_year,
 					MONTHNAME(gl.posting_date) as month_name,
 					b.{budget_against} as budget_against,
@@ -460,7 +460,7 @@ def get_dimension_account_month_map(filters):
 
 			for ad in actual_details.get(budget_for, []):
 				if ad.month_name == month and ad.fiscal_year == ccd.fiscal_year:
-					tav_dict.actual += flt(ad.debit) - flt(ad.credit)
+					tav_dict.actual += flt(ad.debit_in_account_currency) - flt(ad.credit_in_account_currency)
 	return cam_map
 
 

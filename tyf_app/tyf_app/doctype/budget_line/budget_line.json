@@ -34,7 +34,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Code",
-   "reqd": 1,
+   "read_only_depends_on": "eval:!doc.custom_code && doc.project_code != undefined",
    "set_only_once": 1
   },
   {
@@ -59,8 +59,7 @@
    "label": "Total Cost",
    "options": "Company:company:default_currency",
    "precision": "2",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.code != undefined",
@@ -74,8 +73,7 @@
    "fieldname": "bl_child",
    "fieldtype": "Table",
    "label": "Budget Line Children",
-   "options": "Budget Line Child",
-   "reqd": 1
+   "options": "Budget Line Child"
   },
   {
    "fieldname": "amended_from",
@@ -94,6 +92,7 @@
   },
   {
    "default": "0",
+   "description": "Delete all rows from 'Budget Line Child' table below to change this value",
    "fieldname": "multi_currency",
    "fieldtype": "Check",
    "label": "Multi Currency",
@@ -112,18 +111,20 @@
   },
   {
    "default": "None",
+   "depends_on": "eval:doc.project_code",
    "fetch_from": "project_code.company",
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company",
+   "read_only_depends_on": "eval:doc.project_code",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-24 23:36:20.029968",
+ "modified": "2021-12-26 17:30:53.117017",
  "modified_by": "Administrator",
  "module": "TYF App",
  "name": "Budget Line",

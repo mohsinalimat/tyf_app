@@ -15,13 +15,22 @@ class BudgetLine(Document):
 
 	def validate_multi_currency(self):
 		currencies = []
+		msg = ''
 		if self.bl_child:
 			for child in self.bl_child:
+				account_currency = frappe.db.get_value("Account", {"name": child.account},
+					"account_currency")
+				if child.account_currency != account_currency:
+					msg += _('Row #{0}: The Budget Line "{1}" Currency = "{2}" and Account "{3}" Currency = "{4}" does not match.').format(
+						child.idx, frappe.bold(child.name), frappe.bold(child.account_currency), frappe.bold(child.account), frappe.bold(account_currency))
+					msg += "<br><br>"
 				if child.account_currency not in currencies:
 					currencies.append(child.account_currency)
 			if not self.multi_currency and len(currencies) > 1:
-				frappe.thorw(_("If you want to use muliable currencies for budget lines make sure you check 'Multi Currency' our if you are using the data importer set its value to '1' in the imported file."))
-
+				print("currencies = ", currencies)
+				frappe.throw(_("If you want to use muliable currencies for budget lines make sure you check 'Multi Currency' our if you are using the data importer set its value to '1' in the imported file."))
+			elif msg != '':
+				frappe.throw(msg)
 
 	def delete_amended_from_doc(self):	
 		if self.amended_from:

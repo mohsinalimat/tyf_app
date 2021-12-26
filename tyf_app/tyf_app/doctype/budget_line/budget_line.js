@@ -4,10 +4,7 @@
 frappe.ui.form.on('Budget Line', {
 
 	refresh: function(frm) {
-		if (frm.is_new() && frm.doc.amended_from){
-			
-			// frm.set_value
-		}
+		frm.events.toggle_bl_child_code_field(frm);
 		frm.fields_dict['bl_child'].grid.get_field('account').get_query = function(doc, cdt, cdn) {
 			var child = locals[cdt][cdn];
 			return {    
@@ -40,8 +37,8 @@ frappe.ui.form.on('Budget Line', {
 		} else {
 			frm.set_value("code", undefined);
 		}
-
-		
+		frm.set_value("custom_code", 0);
+		refresh_field("bl_child");
 	},
 
 	code: (frm) => {
@@ -54,11 +51,31 @@ frappe.ui.form.on('Budget Line', {
 		frm.events.toggle_fields_based_on_currency(frm);
 	},
 
+	custom_code: (frm) =>{
+		if(frm.doc.custom_code){
+			
+			frm.set_value("code", undefined);
+		} else {
+			frm.events.get_max_parent_code(frm);
+		}
+		frm.events.toggle_bl_child_code_field(frm);
+		frm.clear_table('bl_child');
+		frm.refresh();
+	},
+
 	increase_counter: (frm) => {
 		frm.set_value("counter", frm.doc.counter + 1);
 	},
 	decrease_counter: (frm) => {
 		frm.set_value("counter", frm.doc.counter - 1);
+	},
+
+	toggle_bl_child_code_field: (frm) => {
+		frm.fields_dict.bl_child.grid.update_docfield_property(
+			'code',
+			'read_only',
+			frm.doc.custom_code ? 0 : 1
+		);
 	},
 	
 
@@ -108,11 +125,13 @@ frappe.ui.form.on('Budget Line', {
 	},
 
 	get_max_parent_code: (frm) => {
-		frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_latest_parent_code', {
-			'project_code': frm.doc.project_code
-		  }).then(r => {
-			frm.set_value("code", r);
-		  });
+		if(!frm.doc.custom_code){
+			frappe.xcall('tyf_app.tyf_app.doctype.budget_line.budget_line.get_latest_parent_code', {
+				'project_code': frm.doc.project_code
+			  }).then(r => {
+				frm.set_value("code", r);
+			  });
+		}
 	},
 
 	get_amended_doc_code: (frm) => {
